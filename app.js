@@ -20,7 +20,7 @@ client.on('message', message => {
                 getSetInfos(message.channel, args);
             break;
             case "part":
-                getPartsInfos(message.channel, args);
+                getPartsInfos(message, args);
             break;
             case 'bl':
                 message.channel.send('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args);
@@ -38,6 +38,9 @@ client.on('message', message => {
             break;
             case "inviteLegBot":
                 client.generateInvite(['SEND_MESSAGES']).then(link=>message.author.send(link));
+            break;
+            case "credits":
+                showCredits(message);
             break;
          }
      }
@@ -62,10 +65,7 @@ getReview = function(set) {
 
 getSetInfos = function(channel, setNumber) {
     var set = httpGet('https://brickinsights.com/api/sets/'+setNumber+'-1');
-    var sourceUrl, setUrl = 'https://brickinsights.com/sets/'+setNumber+'-1';
-
-    var message = 'toto';
-    var rich = null;
+    var BLlink = "https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber;
 
     if (set.error) {
         message = set.error;
@@ -76,14 +76,14 @@ getSetInfos = function(channel, setNumber) {
 
         const exampleEmbed = new Discord.RichEmbed()
             .setColor('#F2CD37')
-            .setTitle(set.name)
+            .setTitle(setNumber + ' ' + set.name)
             .setURL(setUrl)
             .setThumbnail("https://brickinsights.com/"+set.image_urls.teaser)
-            .addField('General', "Set " + setNumber +" "+ set.name +"\n \
-                Released in "+ set.year + ", belongs to the "+ set.primary_category.name +" category")
+            .addField('General',"Released in "+ set.year + ", belongs to the "+ set.primary_category.name +" category")
             .addField('Pieces', "Made of **" + set.part_count +"** parts and **"+ set.minifig_count+"** minifigures")
             .addField('Price', formatPrice(set))
-            .setFooter('Source : '+sourceUrl);
+            .addField('Links', "[Brickset]("+set.urls.brickset.url+")   -   [Bricklink]("+BLlink+")   -   [Brick Insight]("+set.urls.brickinsights.url+")")
+            .setFooter('Source : Brick Insight');
 
             channel.send(exampleEmbed);
 
@@ -110,37 +110,114 @@ formatPrice = function(set) {
 }
 
 showHelp = function(message) {
-    var mp = "Hey ! \n Thanks for using this LEGO bot ! \n To use me, use the following commands : \n";
-    mp += "`!# or !set [SET NUMBER]`  to have general usefull infos about the set number.\n"
-    mp += "`!part [PART ID]`  to have informations about a piece (Bricklink id).\n"
-    mp += "`!bs [SET NUMBER]`  to show a link to Brickset about the provided set number \n"
-    mp += "`!bl [SET NUMBER]`  to show a BrickLink link to the searched set number \n"
-    mp += "`!review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"
-    mp += "`!help`  to display this message... Not that useful if you're reading this tho. \n \n"
-    mp += "This bot has been made by Thibaut P <3 "
+    var mp = "Hey ! \n Thanks for using this LEGO bot ! :kissing_smiling_eyes: \n To use me, type the following commands : \n";
+    mp += "`!# or !set [SET NUMBER]`  to have general usefull infos about the set number.\n";
+    mp += "`!part [PART ID]`  to have informations about a piece (Bricklink id).\n";;
+    mp += "`!bs [SET NUMBER]`  to show a link to Brickset about the provided set number \n";
+    mp += "`!bl [SET NUMBER]`  to show a BrickLink link to the searched set number \n";
+    mp += "`!review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n";
+    mp += "`!help`  to display this message... Not that useful if you're reading this tho. \n \n";
+    mp += "`!credits`  to show dev credits";
 
     message.author.send(mp);
 }
 
-getPartsInfos = function(channel, partNo) {
-    var key = "key="+config.rebrickableToken;
-    var initialPartSearch = httpGet('https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&"+key); //2436b
+showCredits = function(message) {
+    console.log(client)
+    const credits = new Discord.RichEmbed()
+            .setColor("#03A9F4")
+            .setTitle("LegBot")
+            .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
+            .setURL("https://github.com/ThibautPlg/Discord-LEGO-Bot")
+            .addField('General', "This bot has been developped by Thibaut P\n \
+            Twitter : [@thibaut_plg](https://twitter.com/thibaut_plg)")
+            .addField('APIs and ressources', "\
+            - Rebrickable API : https://rebrickable.com/api/\n\
+            - Brick Insight public API : https://brickinsights.com/ \n \
+            - Brickset links : https://brickset.com \n \
+            - BrickLink links : https://www.bricklink \n \
+            - BrickOwl links : https://www.brickowl.com\n")
+            .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
+            .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
+            message.author.send(credits);
+}
 
-    if (initialPartSearch && initialPartSearch.count >= 1) {
-        var rebrickableNo = initialPartSearch.results['0'].part_num; //10201
-        var part = httpGet('https://rebrickable.com/api/v3/lego/parts/'+rebrickableNo+"/?" + key);
+getPartsInfos = function(message, partNo) {
+    var key = "key="+config.rebrickableToken;
+    var color = "";
+    
+    //can be a BL or Rebrickable id
+    var part = httpGet('https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&"+key); //2436b
+
+    if (part && part.count >= 1) {
+        var rebrickableNo = part.results['0'].part_num; //10201
+        var productionState = '';
+
+        var bricklinkId = part.results['0'].external_ids.BrickLink;
+        var bricklinkUrl = 'https://www.bricklink.com/v2/search.page?q='+rebrickableNo;
+        if (bricklinkId) {
+           bricklinkUrl = "https://www.bricklink.com/v2/catalog/catalogitem.page?P="+ bricklinkId
+        }
+        var brickOwlId = part.results['0'].external_ids.BrickOwl;
+        var brickOwlUrl = 'https://www.brickowl.com/search/catalog?query=266404'+rebrickableNo;
+        if (brickOwlId) {
+            brickOwlUrl = "https://www.brickowl.com/search/catalog?query=266404"+ brickOwlId
+        }
+        var legoId = part.results['0'].external_ids.LEGO ? part.results['0'].external_ids.LEGO : rebrickableNo;
+        var legoUrl = 'https://www.lego.com/fr-fr/page/static/pick-a-brick?query='+legoId;
+        
+        if (rebrickableNo !== partNo) {
+            //We need to query with the rebrickable ID to have further informations.
+            var part = httpGet('https://rebrickable.com/api/v3/lego/parts/'+rebrickableNo+"/?" + key);
+        }
+
+        if(new Date().getFullYear() <= part.year_to) {
+            // Still in production ?
+            productionState = "[:green_circle: Still in production !] \n";
+            color = "#8BC34A";
+        } else {
+            productionState = "[:orange_circle:  No more produced] \n";
+            color = "#F2CD37";
+        }
 
         const partsInfo = new Discord.RichEmbed()
-            .setColor('#F2CD37')
+            .setColor(color)
             .setTitle(part.name)
             .setURL(part.part_url)
             .setThumbnail(part.part_img_url)
-            .addField('General', part.name +"\n \
-                Released in "+ part.year_from + ", at least produced until "+ part.year_to + "\
-                Has " + Object.keys(part.molds) + " differents molds")
-            .addField('Shop : ', "Bricklink : https://www.bricklink.com/v2/catalog/catalogitem.page?P="+ partNo)
+            .addField('General', productionState + part.name +"\n \
+                Released in "+ part.year_from + ", at least produced until "+ part.year_to);
+
+            if(part.molds.length) {
+                partsInfo.addField("Similar to", getSimilarParts(part));
+            }
+
+            partsInfo
+            .addField('Shop : ', "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", true)
             .setFooter('Source : '+ part.part_url);
 
-            channel.send(partsInfo);
+            message.channel.send(partsInfo);
+    } else {
+        message.channel.send("I'm so sorry **"+ message.author.username +"**, I didn't find the part you were looking for. :(");
     }
+}
+
+var getSimilarParts = function(part) {
+    var molds = part.molds;
+    var txt = '';
+    if (molds) {
+        var total = molds.length;
+        var some = molds;
+        if (total > 5) {
+            some = molds.slice(0,5);
+        }
+        for(mold in some) {
+            txt += "["+some[mold]+"](https://rebrickable.com/parts/"+some[mold]+")";
+            if(mold < total-1) {
+                txt += "  |  "; //just to add sexy separators
+            }
+        }
+
+    }
+    return txt;
 }

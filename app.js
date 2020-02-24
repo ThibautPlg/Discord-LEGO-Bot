@@ -92,10 +92,11 @@ getSetInfos = function(channel, setNumber) {
 
 httpGet = function(theUrl) {
     var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+	xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+	xmlHttp.timeout = 5000; //5 sec of timeout
     xmlHttp.send( null );
     // return xmlHttp.responseText;
-    var data = JSON.parse(xmlHttp.responseText);
+    var data = JSON.parse(xmlHttp.responseText) ? JSON.parse(xmlHttp.responseText) : false;
     return data;
 }
 
@@ -198,7 +199,10 @@ getPartsInfos = function(message, partNo) {
             message.channel.send(partsInfo);
     } else {
         message.channel.send("I'm so sorry **"+ message.author.username +"**, I didn't find the part you were looking for. :(");
-    }
+	}
+	if(!part) {
+		message.channel.send("It looks like Rebrickable is down, I can't get my data ! :(");
+	}
 }
 
 var getSimilarParts = function(part) {

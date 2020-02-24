@@ -123,7 +123,6 @@ showHelp = function(message) {
 }
 
 showCredits = function(message) {
-    console.log(client)
     const credits = new Discord.RichEmbed()
             .setColor("#03A9F4")
             .setTitle("LegBot")

@@ -9,10 +9,10 @@ client.once('ready', () => {
 client.login(config.token);
 
 client.on('message', message => {
-    if (message.content.substring(0, 1) == '!') {
+    if (message.content.substring(0, 1) == config.trigger) {
         var args = message.content.substring(1).split(' ');
         var cmd = args[0];
-       
+
         args = args.splice(1);
         switch(cmd) {
             case '#':
@@ -26,10 +26,10 @@ client.on('message', message => {
                 message.channel.send('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args);
             break;
             case 'bi':
-            case "review": 
+            case "review":
                 message.channel.send(getReview(args));
             break;
-            case "bs": 
+            case "bs":
                 message.channel.send('https://brickset.com/sets/'+args);
             break;
             case "LegBot":
@@ -145,7 +145,7 @@ showCredits = function(message) {
 getPartsInfos = function(message, partNo) {
     var key = "key="+config.rebrickableToken;
     var color = "";
-    
+
     //can be a BL or Rebrickable id
     var part = httpGet('https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&"+key); //2436b
 
@@ -165,7 +165,7 @@ getPartsInfos = function(message, partNo) {
         }
         var legoId = part.results['0'].external_ids.LEGO ? part.results['0'].external_ids.LEGO : rebrickableNo;
         var legoUrl = 'https://www.lego.com/fr-fr/page/static/pick-a-brick?query='+legoId;
-        
+
         if (rebrickableNo !== partNo) {
             //We need to query with the rebrickable ID to have further informations.
             var part = httpGet('https://rebrickable.com/api/v3/lego/parts/'+rebrickableNo+"/?" + key);

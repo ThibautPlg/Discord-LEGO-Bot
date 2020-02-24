@@ -2,9 +2,10 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const config = require('./config.json');
+const package = require('./package.json');
 
 client.once('ready', () => {
-    console.log('Online');
+    console.log('LegBot is Online !');
 });
 client.login(config.token);
 
@@ -41,6 +42,9 @@ client.on('message', message => {
             break;
             case "credits":
                 showCredits(message);
+            break;
+            case "botinfo":
+                showStats(message);
             break;
          }
      }
@@ -85,61 +89,62 @@ getSetInfos = function(channel, setNumber) {
             .addField('Links', "[Brickset]("+set.urls.brickset.url+")   -   [Bricklink]("+BLlink+")   -   [Brick Insight]("+set.urls.brickinsights.url+")")
             .setFooter('Source : Brick Insight');
 
-            channel.send(exampleEmbed);
+        channel.send(exampleEmbed);
 
     }
-};
-
-httpGet = function(theUrl) {
-    var xmlHttp = new XMLHttpRequest();
-	xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
-	xmlHttp.timeout = 5000; //5 sec of timeout
-    xmlHttp.send( null );
-    // return xmlHttp.responseText;
-    var data = JSON.parse(xmlHttp.responseText) ? JSON.parse(xmlHttp.responseText) : false;
-    return data;
 }
 
-formatPrice = function(set) {
-    message = "Priced **$"+ set.retail_price_usd+"**";
-    if (set.retail_price_usd !== set.retail_price_usd_inflation_adjusted) {
-        message += " ( $"+ set.retail_price_usd_inflation_adjusted+" with inflation)";
-    }
-    message += "\n";
-    message += "Price per Piece ratio : $"+ set.ppp_usd +"\n"
-    return message;
+showStats = function(message) {
+    var stats = new Discord.RichEmbed()
+        .setColor("#3F51B5")
+        .setTitle("LegBot")
+        .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
+        .setURL("https://github.com/ThibautPlg/Discord-LEGO-Bot")
+        .addField('ID', client.user.id)
+        .addField('Uptime', (process.uptime() + "").toHHMMSS(), true)
+        .addField('Version', package.version, true)
+        .addField('\u200b', '\u200b', true)
+        .addField('Server count', client.guilds.size, true)
+        .addField('Total channels', client.channels.size, true)
+        .addField('Total users', client.users.size, true);
+    message.author.send(stats);
 }
 
 showHelp = function(message) {
-    var mp = "Hey ! \n Thanks for using this LEGO bot ! :kissing_smiling_eyes: \n To use me, type the following commands : \n";
-    mp += "`!# or !set [SET NUMBER]`  to have general usefull infos about the set number.\n";
-    mp += "`!part [PART ID]`  to have informations about a piece (Bricklink id).\n";;
-    mp += "`!bs [SET NUMBER]`  to show a link to Brickset about the provided set number \n";
-    mp += "`!bl [SET NUMBER]`  to show a BrickLink link to the searched set number \n";
-    mp += "`!review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n";
-    mp += "`!help`  to display this message... Not that useful if you're reading this tho. \n \n";
-    mp += "`!credits`  to show dev credits";
-
-    message.author.send(mp);
+    var t = config.trigger;
+    var help = new Discord.RichEmbed()
+        .setColor("#009688")
+        .setTitle("LegBot help")
+        .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
+        .addField('Hey !', "Thanks for using this LEGO bot ! :kissing_smiling_eyes: \n To use me, type the following commands :")
+        .addField('Commands : ', "`"+t+"# or "+t+"set [SET NUMBER]`  to have general usefull infos about the set number.\n"+
+        "`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id).\n"+
+        "`"+t+"bs [SET NUMBER]`  to show a link to Brickset about the provided set number \n"+
+        "`"+t+"bl [SET NUMBER]`  to show a BrickLink link to the searched set number \n"+
+        "`"+t+"review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"+
+        "`"+t+"help`  to display this message... Not that useful if you're reading this tho. \n "+
+        "`"+t+"inviteLegBot` to get a link to invite LegBot to your server. \n \n"+
+        "`"+t+"credits`  to show dev credits");
+    message.author.send(help);
 }
 
 showCredits = function(message) {
-    const credits = new Discord.RichEmbed()
-            .setColor("#03A9F4")
-            .setTitle("LegBot")
-            .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
-            .setURL("https://github.com/ThibautPlg/Discord-LEGO-Bot")
-            .addField('General', "This bot has been developped by Thibaut P\n \
-            Twitter : [@thibaut_plg](https://twitter.com/thibaut_plg)")
-            .addField('APIs and ressources', "\
-            - Rebrickable API : https://rebrickable.com/api/\n\
-            - Brick Insight public API : https://brickinsights.com/ \n \
-            - Brickset links : https://brickset.com \n \
-            - BrickLink links : https://www.bricklink \n \
-            - BrickOwl links : https://www.brickowl.com\n")
-            .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
-            .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
-            message.author.send(credits);
+    var credits = new Discord.RichEmbed()
+        .setColor("#03A9F4")
+        .setTitle("LegBot")
+        .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
+        .setURL("https://github.com/ThibautPlg/Discord-LEGO-Bot")
+        .addField('General', "This bot has been developped by Thibaut P\n \
+        Twitter : [@thibaut_plg](https://twitter.com/thibaut_plg)")
+        .addField('APIs and ressources', "\
+        - Rebrickable API : https://rebrickable.com/api/\n\
+        - Brick Insight public API : https://brickinsights.com/ \n \
+        - Brickset links : https://brickset.com \n \
+        - BrickLink links : https://www.bricklink \n \
+        - BrickOwl links : https://www.brickowl.com\n")
+        .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
+        .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
+    message.author.send(credits);
 }
 
 getPartsInfos = function(message, partNo) {
@@ -223,4 +228,40 @@ var getSimilarParts = function(part) {
 
     }
     return txt;
+}
+
+/*************************   Stuff used by function      ****************************/
+
+httpGet = function(theUrl) {
+    var xmlHttp = new XMLHttpRequest();
+	xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+	xmlHttp.timeout = 5000; //5 sec of timeout
+    xmlHttp.send( null );
+    // return xmlHttp.responseText;
+    var data = JSON.parse(xmlHttp.responseText) ? JSON.parse(xmlHttp.responseText) : false;
+    return data;
+}
+
+String.prototype.toHHMMSS = function () {
+    var sec_num = parseInt(this, 10); // don't forget the second param
+    var hours   = Math.floor(sec_num / 3600);
+    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+    if (hours   < 10) {hours   = "0"+hours;}
+    if (minutes < 10) {minutes = "0"+minutes;}
+    if (seconds < 10) {seconds = "0"+seconds;}
+    var time    = hours+':'+minutes+':'+seconds;
+    return time;
+}
+
+
+formatPrice = function(set) {
+    message = "Priced **$"+ set.retail_price_usd+"**";
+    if (set.retail_price_usd !== set.retail_price_usd_inflation_adjusted) {
+        message += " ( $"+ set.retail_price_usd_inflation_adjusted+" with inflation)";
+    }
+    message += "\n";
+    message += "Price per Piece ratio : $"+ set.ppp_usd +"\n"
+    return message;
 }

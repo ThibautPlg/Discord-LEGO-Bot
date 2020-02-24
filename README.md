@@ -2,7 +2,7 @@
 
 <!-- > Yes, hybdid html markdown, sorry :( <--->
 
-<table style="width:100%;" align="center">
+<table style="width:100%; border: none;" align="center">
 <td style="width:49%; border: none;">
 <img height="100" src="./readme.assets/legBot.png" alt="Logo">
 </td>
@@ -30,8 +30,11 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 - `!bs [SET NUMBER]`  to show a link to Brickset about the provided set number
 - `!bl [SET NUMBER]`  to show a BrickLink link to the searched set number
 - `!review [SET NUMBER]`  to have infos about the requested set (rating, reviews...)
-- `!help`  to display this message... Not that useful if you're reading this tho.
-- `!credits`  to show dev credits";
+- `!help`  to display this message... Not that useful if you're reading this tho
+- `!inviteLegBot`  to get an invitation link
+- `!credits`  to show dev credits
+
+
 ## Credits :
 - Rebrickable API : https://rebrickable.com/api/
 - Brick Insight public API : https://brickinsights.com/

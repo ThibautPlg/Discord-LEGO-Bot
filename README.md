@@ -3,10 +3,10 @@
 <!-- > Yes, hybdid html markdown, sorry :( <--->
 
 <table style="width:100%;" align="center">
-<td style="width:49%">
-<img height="100" src="./readme.assets/legbot.png" alt="Logo">
+<td style="width:49%; border: none;">
+<img height="100" src="./readme.assets/legBot.png" alt="Logo">
 </td>
-<td style="width:49%">
+<td style="width:49%; border: none;">
 <img src="https://discordbots.org/api/widget/status/666184693531672608.svg" alt="Status">
 </td>
 </div>

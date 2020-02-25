@@ -63,3 +63,14 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Support and contact
 [Twitter](https://twitter.com/thibaut_plg)
+
+## Changelog
+
+- 1.2.0
+  - Adding logging of commands, anonymously, to get infos about most used commands to improve them in the future. 
+- 1.1.0
+  - Adding the !botinfo command
+  - Updating the readme
+  - Ordering code
+- 1.0.0
+  - Initial release

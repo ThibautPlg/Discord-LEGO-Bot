@@ -1,5 +1,9 @@
 {
 	"trigger": "!",
     "token": "blablabla",
-    "rebrickableToken": "my studs are bigger than yours"
+    "rebrickableToken": "my studs are bigger than yours",
+    "log": {
+        "active": true,
+        "logfile": "log.txt"
+    }
 }

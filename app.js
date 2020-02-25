@@ -3,9 +3,11 @@ const client = new Discord.Client();
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const config = require('./config.json');
 const package = require('./package.json');
+const fs = require('fs');
 
 client.once('ready', () => {
     console.log('LegBot is Online !');
+    log("Fresh start")
 });
 client.login(config.token);
 
@@ -25,13 +27,15 @@ client.on('message', message => {
             break;
             case 'bl':
                 message.channel.send('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args);
+                log("bl " + args);
             break;
             case 'bi':
             case "review":
-                message.channel.send(getReview(args));
+                getReview(args);
             break;
             case "bs":
                 message.channel.send('https://brickset.com/sets/'+args);
+                log("bs " + args);
             break;
             case "LegBot":
             case "help":
@@ -39,6 +43,7 @@ client.on('message', message => {
             break;
             case "inviteLegBot":
                 client.generateInvite(['SEND_MESSAGES']).then(link=>message.author.send(link));
+                log("invite");
             break;
             case "credits":
                 showCredits(message);
@@ -58,13 +63,16 @@ getReview = function(set) {
     var message = '';
 
     if (review.error) {
+        log("review-not-found " + set);
         message = review.error;
     } else {
+        log("review " + set);
         message = "**"+review.name+"** ("+review.primary_category.name+", "+ review.year +") \n";
         message += "Rated " + review.average_rating +"/100 \n";
         message += "More reviews and infos at "+ review.url
     }
-    return message;
+    log("review " + args);
+    message.channel.send(message);
 }
 
 getSetInfos = function(channel, setNumber) {
@@ -72,6 +80,7 @@ getSetInfos = function(channel, setNumber) {
     var BLlink = "https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber;
 
     if (set.error) {
+        log("set-not-found " + setNumber);
         message = set.error;
     } else {
         if (set.urls && set.urls.brickset) {
@@ -89,8 +98,8 @@ getSetInfos = function(channel, setNumber) {
             .addField('Links', "[Brickset]("+set.urls.brickset.url+")   -   [Bricklink]("+BLlink+")   -   [Brick Insight]("+set.urls.brickinsights.url+")")
             .setFooter('Source : Brick Insight');
 
+        log("set " + setNumber);
         channel.send(exampleEmbed);
-
     }
 }
 
@@ -107,6 +116,7 @@ showStats = function(message) {
         .addField('Server count', client.guilds.size, true)
         .addField('Total channels', client.channels.size, true)
         .addField('Total users', client.users.size, true);
+    log("stats");
     message.author.send(stats);
 }
 
@@ -125,6 +135,7 @@ showHelp = function(message) {
         "`"+t+"help`  to display this message... Not that useful if you're reading this tho. \n "+
         "`"+t+"inviteLegBot` to get a link to invite LegBot to your server. \n \n"+
         "`"+t+"credits`  to show dev credits");
+    log("help");
     message.author.send(help);
 }
 
@@ -144,6 +155,7 @@ showCredits = function(message) {
         - BrickOwl links : https://www.brickowl.com\n")
         .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
         .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
+    log("credits");
     message.author.send(credits);
 }
 
@@ -202,11 +214,14 @@ getPartsInfos = function(message, partNo) {
             .setFooter('Source : '+ part.part_url);
 
             message.channel.send(partsInfo);
+            log("part " + partNo);
     } else {
         message.channel.send("I'm so sorry **"+ message.author.username +"**, I didn't find the part you were looking for. :(");
+        log("part-not-found " + partNo);
 	}
 	if(!part) {
-		message.channel.send("It looks like Rebrickable is down, I can't get my data ! :(");
+        message.channel.send("It looks like Rebrickable is down, I can't get my data ! :(");
+        log("part-not-found-down " + partNo);
 	}
 }
 
@@ -251,7 +266,7 @@ String.prototype.toHHMMSS = function () {
     if (hours   < 10) {hours   = "0"+hours;}
     if (minutes < 10) {minutes = "0"+minutes;}
     if (seconds < 10) {seconds = "0"+seconds;}
-    var time    = hours+':'+minutes+':'+seconds;
+    var time = hours+':'+minutes+':'+seconds;
     return time;
 }
 
@@ -264,4 +279,20 @@ formatPrice = function(set) {
     message += "\n";
     message += "Price per Piece ratio : $"+ set.ppp_usd +"\n"
     return message;
+}
+
+/********************************* Logs  *******************************/
+if (config && config.log && config.log.active) {
+    var logfile = config.log.logfile || "log.txt";
+    // Add a dated prefix to the logfile
+    logfile = (new Date).toISOString().slice(0,7)+"_"+logfile;
+    var logger = fs.createWriteStream(logfile, {
+        flags: 'a' 
+    })
+}
+
+log = function(msg) {
+    if (config && config.log && config.log.active && !!logger) {
+        logger.write((new Date).toISOString().slice(0,19) + "  " + msg + "\n");
+    }
 }

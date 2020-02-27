@@ -22,7 +22,7 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 
 </p>
 
-- `!part [PART ID]` to have informations about a piece (Bricklink id)
+- `!part [PART ID]` to have informations about a piece (Bricklink id). You can add multiple pieces separated by a space (limit in config file)
 <p align="center">
 	<img width="460" src="./readme.assets/part-example.png" alt="Parts Example"> <br> Green for pieces still produced, orange otherwise
 </p>
@@ -66,8 +66,11 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.2.1
+  - You can now search for multiple pieces (ex : `!part 36840 36841`)
+  - Adding the corresponding config var (`piecesMax`, default = 2)
 - 1.2.0
-  - Adding logging of commands, anonymously, to get infos about most used commands to improve them in the future. 
+  - Adding logging of commands, anonymously, to get infos about most used commands to improve them in the future.
 - 1.1.0
   - Adding the !botinfo command
   - Updating the readme

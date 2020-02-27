@@ -128,7 +128,7 @@ showHelp = function(message) {
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
         .addField('Hey !', "Thanks for using this LEGO bot ! :kissing_smiling_eyes: \n To use me, type the following commands :")
         .addField('Commands : ', "`"+t+"# or "+t+"set [SET NUMBER]`  to have general usefull infos about the set number.\n"+
-        "`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id).\n"+
+        "`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id). You can add multiple pieces separated by a space.\n"+
         "`"+t+"bs [SET NUMBER]`  to show a link to Brickset about the provided set number \n"+
         "`"+t+"bl [SET NUMBER]`  to show a BrickLink link to the searched set number \n"+
         "`"+t+"review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"+
@@ -160,6 +160,20 @@ showCredits = function(message) {
 }
 
 getPartsInfos = function(message, partNo) {
+
+	if (partNo.length > 1) {
+		var piecesMax = config.piecesMax || "2";
+		//Multiple pieces searched
+		if (partNo.length > piecesMax) {
+			// Limiting to prevent message flooding
+			partNo = partNo.splice(0, piecesMax);
+			message.channel.send("Hi **"+ message.author.username +"**, you asked for more than "+piecesMax+" pieces. To prevent flooding I'll show you only the "+piecesMax+" firsts");
+		}
+		partNo.forEach(part => {
+			getPartsInfos(message, [part]);
+		});
+		return;
+	}
     var key = "key="+config.rebrickableToken;
     var color = "";
 
@@ -287,7 +301,7 @@ if (config && config.log && config.log.active) {
     // Add a dated prefix to the logfile
     logfile = (new Date).toISOString().slice(0,7)+"_"+logfile;
     var logger = fs.createWriteStream(logfile, {
-        flags: 'a' 
+        flags: 'a'
     })
 }
 

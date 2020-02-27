@@ -5,5 +5,6 @@
     "log": {
         "active": true,
         "logfile": "log.txt"
-    }
+	},
+	"piecesMax" : "2"
 }

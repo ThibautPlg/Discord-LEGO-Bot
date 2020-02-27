@@ -162,6 +162,12 @@ showCredits = function(message) {
 getPartsInfos = function(message, partNo) {
 
 	if (partNo.length > 1) {
+		partNo = partNo.filter(function(a){
+			// Remove text from message (prevent searching on involunteer text instead of piece number)
+			var filter = new RegExp(".*?\\d+.*?\\S","i");
+			return String(a).match(filter);
+		})
+
 		var piecesMax = config.piecesMax || "2";
 		//Multiple pieces searched
 		if (partNo.length > piecesMax) {
@@ -174,7 +180,7 @@ getPartsInfos = function(message, partNo) {
 		});
 		return;
 	}
-    var key = "key="+config.rebrickableToken;
+	var key = "key="+config.rebrickableToken;
     var color = "";
 
     //can be a BL or Rebrickable id

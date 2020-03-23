@@ -11,19 +11,20 @@ client.once('ready', () => {
 });
 client.login(config.token);
 
-client.on('message', message => {
-    if (message.content.substring(0, 1) == config.trigger) {
-        var args = message.content.substring(1).split(' ');
+client.on('message', postedMessage => {
+    if (postedMessage.content.substring(0, 1) == config.trigger) {
+        var args = postedMessage.content.substring(1).split(' ');
         var cmd = args[0];
+		client.legBotMessage = postedMessage;
 
         args = args.splice(1);
         switch(cmd) {
             case '#':
             case 'set':
-                getSetInfos(message.channel, args);
+                getSetInfos(args);
             break;
             case "part":
-                getPartsInfos(message, args);
+                getPartsInfos(args);
             break;
             case 'bl':
                 message.channel.send('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args);
@@ -39,17 +40,17 @@ client.on('message', message => {
             break;
             case "LegBot":
             case "help":
-                showHelp(message);
+                showHelp();
             break;
             case "inviteLegBot":
                 client.generateInvite(['SEND_MESSAGES']).then(link=>message.author.send(link));
                 log("invite");
             break;
             case "credits":
-                showCredits(message);
+                showCredits();
             break;
             case "botinfo":
-                showStats(message);
+                showStats();
             break;
          }
      }
@@ -71,17 +72,25 @@ getReview = function(set) {
         message += "Rated " + review.average_rating +"/100 \n";
         message += "More reviews and infos at "+ review.url
     }
-    log("review " + args);
-    message.channel.send(message);
+    client.legBotMessage.channel.send(message);
 }
 
-getSetInfos = function(channel, setNumber) {
+getSetInfos = function(setNumber) {
+	var channel = client.legBotMessage.channel;
+
+	if (!setNumber.length) {
+        log("set-no-id " + setNumber);
+		client.legBotMessage.react('🤔');
+		return;
+	}
+
     var set = httpGet('https://brickinsights.com/api/sets/'+setNumber+'-1');
     var BLlink = "https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber;
 
     if (set.error) {
         log("set-not-found " + setNumber);
-        message = set.error;
+		channel.send("Set "+setNumber+" not found... ");
+		client.legBotMessage.react('🙄');
     } else {
         if (set.urls && set.urls.brickset) {
             setUrl = set.urls.brickset.url;
@@ -103,7 +112,7 @@ getSetInfos = function(channel, setNumber) {
     }
 }
 
-showStats = function(message) {
+showStats = function() {
     var stats = new Discord.RichEmbed()
         .setColor("#3F51B5")
         .setTitle("LegBot")
@@ -117,10 +126,10 @@ showStats = function(message) {
         .addField('Total channels', client.channels.size, true)
         .addField('Total users', client.users.size, true);
     log("stats");
-    message.author.send(stats);
+    client.legBotMessage.author.send(stats);
 }
 
-showHelp = function(message) {
+showHelp = function() {
     var t = config.trigger;
     var help = new Discord.RichEmbed()
         .setColor("#009688")
@@ -136,10 +145,10 @@ showHelp = function(message) {
         "`"+t+"inviteLegBot` to get a link to invite LegBot to your server. \n \n"+
         "`"+t+"credits`  to show dev credits");
     log("help");
-    message.author.send(help);
+    client.legBotMessage.author.send(help);
 }
 
-showCredits = function(message) {
+showCredits = function() {
     var credits = new Discord.RichEmbed()
         .setColor("#03A9F4")
         .setTitle("LegBot")
@@ -156,12 +165,17 @@ showCredits = function(message) {
         .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
         .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
     log("credits");
-    message.author.send(credits);
+    client.legBotMessage.author.send(credits);
 }
 
-getPartsInfos = function(message, partNo) {
+getPartsInfos = function(partNo) {
 
-	if (partNo.length > 1) {
+	if (!partNo.length) {
+		// There is no part id given
+		log("part-no-id " + partNo);
+		client.legBotMessage.react('🤔');
+		return;
+	} else if (partNo.length > 1) {
 		partNo = partNo.filter(function(a){
 			// Remove text from message (prevent searching on involunteer text instead of piece number)
 			var filter = new RegExp(".*?\\d+.*?\\S","i");
@@ -173,10 +187,10 @@ getPartsInfos = function(message, partNo) {
 		if (partNo.length > piecesMax) {
 			// Limiting to prevent message flooding
 			partNo = partNo.splice(0, piecesMax);
-			message.channel.send("Hi **"+ message.author.username +"**, you asked for more than "+piecesMax+" pieces. To prevent flooding I'll show you only the "+piecesMax+" firsts");
+			client.legBotMessage.channel.send("Hi **"+ message.author.username +"**, you asked for more than "+piecesMax+" pieces. To prevent flooding I'll show you only the "+piecesMax+" firsts");
 		}
 		partNo.forEach(part => {
-			getPartsInfos(message, [part]);
+			getPartsInfos([part]);
 		});
 		return;
 	}
@@ -233,14 +247,16 @@ getPartsInfos = function(message, partNo) {
             .addField('Shop : ', "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", true)
             .setFooter('Source : '+ part.part_url);
 
-            message.channel.send(partsInfo);
+            client.legBotMessage.channel.send(partsInfo);
             log("part " + partNo);
     } else {
-        message.channel.send("I'm so sorry **"+ message.author.username +"**, I didn't find the part you were looking for. :(");
+		client.legBotMessage.channel.send("I'm so sorry **"+ client.legBotMessage.author.username +"**, I didn't find the part you were looking for. :(");
+		client.legBotMessage.react('🙄')
         log("part-not-found " + partNo);
 	}
 	if(!part) {
-        message.channel.send("It looks like Rebrickable is down, I can't get my data ! :(");
+		client.legBotMessage.channel.send("It looks like Rebrickable is down, I can't get my data ! 😐");
+		client.legBotMessage.react('😐')
         log("part-not-found-down " + partNo);
 	}
 }
@@ -314,5 +330,16 @@ if (config && config.log && config.log.active) {
 log = function(msg) {
     if (config && config.log && config.log.active && !!logger) {
         logger.write((new Date).toISOString().slice(0,19) + "  " + msg + "\n");
-    }
+	}
+}
+
+/*********************** Custom functions if needed *********************/
+if (config && config.moreFunctions){
+	var customFiles = config.moreFunctions;
+	if (!Array.isArray(config.moreFunctions)){
+		customFiles = [customFiles];
+	}
+	customFiles.forEach(customFile => {
+		eval(fs.readFileSync('./'+customFile)+'');
+	});
 }

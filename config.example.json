@@ -6,5 +6,6 @@
         "active": true,
         "logfile": "log.txt"
 	},
-	"piecesMax" : "2"
+	"piecesMax" : "2",
+	"moreFunctions": ["custom/example.js"]
 }

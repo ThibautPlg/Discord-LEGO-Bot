@@ -2,3 +2,4 @@ config.json
 node_modules/
 snippet.json
 *logs.txt
+custom/

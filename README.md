@@ -66,6 +66,12 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.2.2
+  - You can now add custom functions without messing with existing code, simply add a js file and declare it into the config var. (See custom/example.js)
+  - Adding the corresponding config var (`moreFunctions`, can be an array)
+  - The bot is now adding a 🙄 reaction to a message if he didn't find the piece / set.
+  - The bot is now adding a 🤔 reaction when there is no set or parts id given.
+  - General code rework on message var.
 - 1.2.1
   - You can now search for multiple pieces (ex : `!part 36840 36841`)
   - Adding the corresponding config var (`piecesMax`, default = 2)

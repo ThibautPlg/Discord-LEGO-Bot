@@ -60,6 +60,8 @@ client.on('message', postedMessage => {
 /**************************  FUNCTIONS *******************************/
 
 getReview = function(set) {
+	var channel = client.legBotMessage.channel;
+
     var review = httpGet('https://brickinsights.com/api/sets/'+set+'-1');
     var message = '';
 
@@ -67,12 +69,18 @@ getReview = function(set) {
         log("review-not-found " + set);
         message = review.error;
     } else {
-        log("review " + set);
-        message = "**"+review.name+"** ("+review.primary_category.name+", "+ review.year +") \n";
-        message += "Rated " + review.average_rating +"/100 \n";
-        message += "More reviews and infos at "+ review.url
+		message = new Discord.RichEmbed()
+		.setColor('#F2CD37')
+		.setTitle(review.name + ' ' + review.year)
+		.setURL(review.url)
+		.setThumbnail("https://brickinsights.com/storage/sets/"+set+"-1.jpg")
+		.addField('Rated',review.name +" is rated **"+ review.average_rating + "/100**") /*+ ", belongs to the "+ set.primary_category.name +" category")*/
+		.addField('Links', "More reviews at [BrickInsignt]("+review.url+")")
+		.setFooter('Source : BrickInsignt');
+
+		log("review " + set);
     }
-    client.legBotMessage.channel.send(message);
+	channel.send(message);
 }
 
 getSetInfos = function(setNumber) {
@@ -84,31 +92,36 @@ getSetInfos = function(setNumber) {
 		return;
 	}
 
-    var set = httpGet('https://brickinsights.com/api/sets/'+setNumber+'-1');
+	var key = "key="+config.rebrickableToken;
+
+    var set = httpGet('https://rebrickable.com/api/v3/lego/sets/'+setNumber+"-1/?"+key);
+    // var set = httpGet('https://brickinsights.com/api/sets/'+setNumber+'-1'); RIP
     var BLlink = "https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber;
+    var BSet = "https://brickset.com/sets?query="+setNumber;
+
 
     if (set.error) {
         log("set-not-found " + setNumber);
 		channel.send("Set "+setNumber+" not found... ");
 		client.legBotMessage.react('🙄');
     } else {
-        if (set.urls && set.urls.brickset) {
-            setUrl = set.urls.brickset.url;
+        if (set.set_url) {
+            rebrickableSetUrl = set.set_url;
         }
 
-        const exampleEmbed = new Discord.RichEmbed()
+        var setCard = new Discord.RichEmbed()
             .setColor('#F2CD37')
             .setTitle(setNumber + ' ' + set.name)
-            .setURL(setUrl)
-            .setThumbnail("https://brickinsights.com/"+set.image_urls.teaser)
-            .addField('General',"Released in "+ set.year + ", belongs to the "+ set.primary_category.name +" category")
-            .addField('Pieces', "Made of **" + set.part_count +"** parts and **"+ set.minifig_count+"** minifigures")
-            .addField('Price', formatPrice(set))
-            .addField('Links', "[Brickset]("+set.urls.brickset.url+")   -   [Bricklink]("+BLlink+")   -   [Brick Insight]("+set.urls.brickinsights.url+")")
-            .setFooter('Source : Brick Insight');
+            .setURL(rebrickableSetUrl)
+            .setThumbnail(set.set_img_url)
+            .addField('General',"Released in "+ set.year) /*+ ", belongs to the "+ set.primary_category.name +" category")*/
+            .addField('Pieces', "Made of **" + set.num_parts +"** parts")
+            // .addField('Price', formatPrice(set))
+            .addField('Links', "[Brickset]("+BSet+")   -   [Bricklink]("+BLlink+")")
+            .setFooter('Source : Rebrickable');
 
         log("set " + setNumber);
-        channel.send(exampleEmbed);
+        channel.send(setCard);
     }
 }
 
@@ -321,7 +334,7 @@ formatPrice = function(set) {
 if (config && config.log && config.log.active) {
     var logfile = config.log.logfile || "log.txt";
     // Add a dated prefix to the logfile
-    logfile = (new Date).toISOString().slice(0,7)+"_"+logfile;
+    logfile = (new Date).toISOString().slice(0,10)+"_"+logfile;
     var logger = fs.createWriteStream(logfile, {
         flags: 'a'
     })
@@ -329,10 +342,16 @@ if (config && config.log && config.log.active) {
 
 log = function(msg) {
     if (config && config.log && config.log.active && !!logger) {
-        logger.write((new Date).toISOString().slice(0,19) + "  " + msg + "\n");
+		logger.write((new Date).toISOString().slice(0,19) + "  " + msg + "\n");
+		console.log((new Date).toISOString().slice(0,19) + "  " + msg + "\n");
 	}
 }
 
+debug = function(msg) {
+    if (config && config.log && config.log.debug && !!logger) {
+		console.log(msg + "\n");
+	}
+}
 /*********************** Custom functions if needed *********************/
 if (config && config.moreFunctions){
 	var customFiles = config.moreFunctions;
@@ -340,6 +359,6 @@ if (config && config.moreFunctions){
 		customFiles = [customFiles];
 	}
 	customFiles.forEach(customFile => {
-		eval(fs.readFileSync('./'+customFile)+'');
+		eval(fs.readFileSync(customFile)+'');
 	});
 }

@@ -21,6 +21,7 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 	<img width="460" src="./readme.assets/set-example.png" alt="Parts Example">
 
 </p>
+<span style="color:red">Important : Due to the unavability at the database used to query the sets data, the prices, minifigures count and set category cannot be given anymore. I hope I'll be able to fix that soon !</span>
 
 - `!part [PART ID]` to have informations about a piece (Bricklink id). You can add multiple pieces separated by a space (limit in config file)
 <p align="center">
@@ -66,6 +67,11 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.2.3
+  - Due to an update at the main external API, sets data has been missing for few weeks. !sets and !review are now back, but with less informations than before. I hope I'll be able to fix that soon.
+  - Review are now returned with a pretty "card", like other queries.
+  - Addin a debug log
+  - Adding the corresponding config var (`debug`, bool)
 - 1.2.2
   - You can now add custom functions without messing with existing code, simply add a js file and declare it into the config var. (See custom/example.js)
   - Adding the corresponding config var (`moreFunctions`, can be an array)

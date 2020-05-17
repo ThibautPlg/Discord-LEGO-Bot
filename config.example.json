@@ -1,10 +1,11 @@
 {
 	"trigger": "!",
     "token": "blablabla",
-    "rebrickableToken": "my studs are bigger than yours",
+	"rebrickableToken": "my studs are bigger than yours",
     "log": {
         "active": true,
-        "logfile": "log.txt"
+		"logfile": "log.txt",
+		"debug": false
 	},
 	"piecesMax" : "2",
 	"moreFunctions": ["custom/example.js"]

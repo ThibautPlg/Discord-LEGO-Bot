@@ -8,5 +8,5 @@
 		"debug": false
 	},
 	"piecesMax" : "2",
-	"moreFunctions": ["custom/example.js"]
+	"moreFunctions": ["example.js", "mixelJoint.js"]
 }

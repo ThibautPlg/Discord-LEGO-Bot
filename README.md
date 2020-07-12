@@ -2,6 +2,7 @@
 
 <!-- > Yes, hybdid html markdown, sorry :( <--->
 
+<p align="center">
 <table style="width:100%; border: none;" align="center">
 <td style="width:49%; border: none;">
 <img height="100" src="./readme.assets/legBot.png" alt="Logo">
@@ -10,10 +11,19 @@
 <img src="https://discordbots.org/api/widget/status/666184693531672608.svg" alt="Status">
 </td>
 </div>
-
 </table>
+</p>
 
 This LEGO Discord bot is used to show general informations about LEGO sets and parts in chat.
+
+<hr>
+
+<p align="center">
+<img width="460" src="./readme.assets/100servs.png" alt="100 servers">
+
+Since July 2020, LegBot has been invited to more than 100 servers ! Thank you everyone ! I hope the bot is doing right for your queries, do not forget to contact me on twitter if something goes wrong or is missing !
+</p>
+<hr>
 
 ## Commands :
 - `!# or !set [SET NUMBER]` to have general usefull infos about a specific set
@@ -67,6 +77,10 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.2.3
+  - Not a big update, I just wanted to mess around with a MixelJoints custom feature.
+    - Not that crazy tho. `!mixeljoint`
+  - Updating the custom functions declaration by removing the necessity to specify the directory.
 - 1.2.3
   - Due to an update at the main external API, sets data has been missing for few weeks. !sets and !review are now back, but with less informations than before. I hope I'll be able to fix that soon.
   - Review are now returned with a pretty "card", like other queries.

@@ -151,6 +151,7 @@ showHelp = function() {
         .addField('Hey !', "Thanks for using this LEGO bot ! :kissing_smiling_eyes: \n To use me, type the following commands :")
         .addField('Commands : ', "`"+t+"# or "+t+"set [SET NUMBER]`  to have general usefull infos about the set number.\n"+
         "`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id). You can add multiple pieces separated by a space.\n"+
+        "`"+t+"mixeljoint`  to have the list of the most used mixeljoint (with an awesome drawing of each).\n"+
         "`"+t+"bs [SET NUMBER]`  to show a link to Brickset about the provided set number \n"+
         "`"+t+"bl [SET NUMBER]`  to show a BrickLink link to the searched set number \n"+
         "`"+t+"review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"+
@@ -359,6 +360,6 @@ if (config && config.moreFunctions){
 		customFiles = [customFiles];
 	}
 	customFiles.forEach(customFile => {
-		eval(fs.readFileSync(customFile)+'');
+		eval(fs.readFileSync("./custom/"+customFile)+'');
 	});
 }

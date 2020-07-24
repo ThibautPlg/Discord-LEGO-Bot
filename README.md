@@ -31,7 +31,7 @@ Since July 2020, LegBot has been invited to more than 100 servers ! Thank you ev
 	<img width="460" src="./readme.assets/set-example.png" alt="Parts Example">
 
 </p>
-<span style="color:red">Important : Due to the unavability at the database used to query the sets data, the prices, minifigures count and set category cannot be given anymore. I hope I'll be able to fix that soon !</span>
+
 
 - `!part [PART ID]` to have informations about a piece (Bricklink id). You can add multiple pieces separated by a space (limit in config file)
 <p align="center">
@@ -49,7 +49,7 @@ Since July 2020, LegBot has been invited to more than 100 servers ! Thank you ev
 ## Credits :
 - Rebrickable API : https://rebrickable.com/api/
 - Brick Insight public API : https://brickinsights.com/
-- Brickset links : https://brickset.com
+- Brickset API : https://brickset.com
 - BrickLink links : https://www.bricklink
 - BrickOwl links : https://www.brickowl.com
 
@@ -77,6 +77,9 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.3.0
+  - The great comeback of the full `!set` command. Thanks you Brickset for the API key :)
+  - Adding a config entry for the Brickset API key (`bricksetApiKey`)
 - 1.2.3
   - Not a big update, I just wanted to mess around with a MixelJoints custom feature.
     - Not that crazy tho. `!mixeljoint`

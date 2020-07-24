@@ -35,7 +35,7 @@ client.on('message', postedMessage => {
                 getReview(args);
             break;
             case "bs":
-                message.channel.send('https://brickset.com/sets/'+args);
+                message.channel.send('https://brickset.com/sets/'+args+'-1');
                 log("bs " + args);
             break;
             case "LegBot":
@@ -92,33 +92,43 @@ getSetInfos = function(setNumber) {
 		return;
 	}
 
-	var key = "key="+config.rebrickableToken;
-
-    var set = httpGet('https://rebrickable.com/api/v3/lego/sets/'+setNumber+"-1/?"+key);
-    // var set = httpGet('https://brickinsights.com/api/sets/'+setNumber+'-1'); RIP
+	var BInsight = 'https://brickinsights.com/sets/'+setNumber+'-1';
     var BLlink = "https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber;
-    var BSet = "https://brickset.com/sets?query="+setNumber;
 
+	var set = askBrickset("getSets", "{'setNumber':'"+setNumber+"-1'}");
 
-    if (set.error) {
+    if (set.status && set.status !== "success") {
         log("set-not-found " + setNumber);
 		channel.send("Set "+setNumber+" not found... ");
 		client.legBotMessage.react('🙄');
     } else {
-        if (set.set_url) {
-            rebrickableSetUrl = set.set_url;
-        }
+		set = set.sets[0];
+		let thumbnail = "";
+		if(set.image && set.image.imageURL) {
+			thumbnail = set.image.imageURL;
+		} else if (set.image && set.image.thumbnailURL) {
+			thumbnail = set.image.thumbnailURL;
+		}
+		let notes = '';
+		if(set.extendedData && set.extendedData.notes) {
+			notes = '\n'+set.extendedData.notes;
+		}
 
         var setCard = new Discord.RichEmbed()
             .setColor('#F2CD37')
-            .setTitle(setNumber + ' ' + set.name)
-            .setURL(rebrickableSetUrl)
-            .setThumbnail(set.set_img_url)
-            .addField('General',"Released in "+ set.year) /*+ ", belongs to the "+ set.primary_category.name +" category")*/
-            .addField('Pieces', "Made of **" + set.num_parts +"** parts")
-            // .addField('Price', formatPrice(set))
-            .addField('Links', "[Brickset]("+BSet+")   -   [Bricklink]("+BLlink+")")
-            .setFooter('Source : Rebrickable');
+            .setTitle(set.number + ' ' + set.name)
+            .setURL(set.bricksetURL)
+            .setThumbnail(set.image.imageURL)
+            .addField('General',"Released in **"+ set.year + "**, belongs to the **"+ set.theme +"** category"+notes)
+			.addField('Pieces', "Made of **" + set.pieces +"** parts", true);
+
+		if(set.minifigs && set.minifigs > 0) {
+			setCard.addField('Minifigures','Contains **'+set.minifigs+ '** minifigure'+(set.minifigs > 1 ? 's' : ''), true);
+		}
+
+		setCard.addField('Price', formatPrice(set))
+				.addField('Links', "[Brickset]("+set.bricksetURL+")   -   [Bricklink]("+BLlink+")   -   [BrickInsight]("+BInsight+")")
+				.setFooter('Source : Brickset');
 
         log("set " + setNumber);
         channel.send(setCard);
@@ -173,7 +183,7 @@ showCredits = function() {
         .addField('APIs and ressources', "\
         - Rebrickable API : https://rebrickable.com/api/\n\
         - Brick Insight public API : https://brickinsights.com/ \n \
-        - Brickset links : https://brickset.com \n \
+        - Brickset API : https://brickset.com \n \
         - BrickLink links : https://www.bricklink \n \
         - BrickOwl links : https://www.brickowl.com\n")
         .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
@@ -320,14 +330,45 @@ String.prototype.toHHMMSS = function () {
     return time;
 }
 
+askBrickset = function(endpoint, what) {
+	var baseUrl = 'https://brickset.com/api/v3.asmx/';
+	var url = baseUrl+endpoint;
+
+	request = "apiKey="+config.bricksetApiKey;
+	request += "&userhash=";
+	request += "&params="+what;
+
+
+	var xmlHttp = new XMLHttpRequest();
+	xmlHttp.open( "POST", url, false );
+	xmlHttp.timeout = 5000; //5 sec of timeout
+	xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xmlHttp.send(request);
+
+    var data = JSON.parse(xmlHttp.responseText) ? JSON.parse(xmlHttp.responseText) : false;
+    return data;
+}
 
 formatPrice = function(set) {
-    message = "Priced **$"+ set.retail_price_usd+"**";
-    if (set.retail_price_usd !== set.retail_price_usd_inflation_adjusted) {
-        message += " ( $"+ set.retail_price_usd_inflation_adjusted+" with inflation)";
-    }
-    message += "\n";
-    message += "Price per Piece ratio : $"+ set.ppp_usd +"\n"
+	let sign = '';
+	let price = '';
+	if (set.LEGOCom && set.LEGOCom.US && set.LEGOCom.US.retailPrice) {
+		sign = '$';
+		price = set.LEGOCom.US.retailPrice
+	} else if (set.LEGOCom && set.LEGOCom.UK && set.LEGOCom.UK.retailPrice) {
+		sign = '£';
+		price = set.LEGOCom.UK.retailPrice
+	} else {
+		return "No price data available."
+	}
+	message = "Priced **"+sign+ price+"**";
+	// Different API, no more inflation adjusted prince :(
+    // if (set.retail_price_usd !== set.retail_price_usd_inflation_adjusted) {
+    //     message += " ( $"+ set.retail_price_usd_inflation_adjusted+" with inflation)";
+    // }
+	message += "\n";
+	var ppp = (price/set.pieces).toFixed(2);
+    message += "Price per Piece ratio : **"+sign+ ppp +"**\n"
     return message;
 }
 

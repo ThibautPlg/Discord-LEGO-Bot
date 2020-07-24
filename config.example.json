@@ -2,6 +2,7 @@
 	"trigger": "!",
     "token": "blablabla",
 	"rebrickableToken": "my studs are bigger than yours",
+	"bricksetApiKey": "Mixels will come back",
     "log": {
         "active": true,
 		"logfile": "log.txt",

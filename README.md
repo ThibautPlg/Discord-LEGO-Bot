@@ -5,7 +5,7 @@
 <p align="center">
 <table style="width:100%; border: none;" align="center">
 <td style="width:49%; border: none;">
-<img height="100" src="./readme.assets/legBot.png" alt="Logo">
+<img height="100" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/legBot.png" alt="Logo">
 </td>
 <td style="width:49%; border: none;">
 <img src="https://discordbots.org/api/widget/status/666184693531672608.svg" alt="Status">
@@ -19,7 +19,7 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 <hr>
 
 <p align="center">
-<img width="460" src="./readme.assets/100servs.png" alt="100 servers">
+<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/100servs.png" alt="100 servers">
 
 Since July 2020, LegBot has been invited to more than 100 servers ! Thank you everyone ! I hope the bot is doing right for your queries, do not forget to contact me on twitter if something goes wrong or is missing !
 </p>
@@ -28,14 +28,14 @@ Since July 2020, LegBot has been invited to more than 100 servers ! Thank you ev
 ## Commands :
 - `!# or !set [SET NUMBER]` to have general usefull infos about a specific set
 <p align="center">
-	<img width="460" src="./readme.assets/set-example.png" alt="Parts Example">
+	<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/set-example.png" alt="Parts Example">
 
 </p>
 
 
 - `!part [PART ID]` to have informations about a piece (Bricklink id). You can add multiple pieces separated by a space (limit in config file)
 <p align="center">
-	<img width="460" src="./readme.assets/part-example.png" alt="Parts Example"> <br> Green for pieces still produced, orange otherwise
+	<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/part-example.png" alt="Parts Example"> <br> Green for pieces still produced, orange otherwise
 </p>
 
 - `!bs [SET NUMBER]`  to show a link to Brickset about the provided set number
@@ -69,7 +69,7 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 <p align="center">
 	<a href="https://discordapp.com/oauth2/authorize?client_id=666184693531672608&scope=bot&permissions=0">
-	<img src="./readme.assets/invitebutton.png" alt="Invite me !"> </a>
+	<img src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/invitebutton.png" alt="Invite me !"> </a>
 </p>
 
 ## Support and contact

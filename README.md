@@ -16,6 +16,7 @@
 
 This LEGO Discord bot is used to show general informations about LEGO sets and parts in chat.
 
+[Website](https://thibautplg.github.io/legbot/)
 <hr>
 
 <p align="center">

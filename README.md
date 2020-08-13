@@ -78,6 +78,9 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.3.1
+  - Fixing a crash on `!bl` and `!bs` commands.
+  - Fixing a crash where no sets were found but with a success message from the API.
 - 1.3.0
   - The great comeback of the full `!set` command. Thanks you Brickset for the API key :)
   - Adding a config entry for the Brickset API key (`bricksetApiKey`)

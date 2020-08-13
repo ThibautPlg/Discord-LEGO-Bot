@@ -9,5 +9,5 @@
 		"debug": false
 	},
 	"piecesMax" : "2",
-	"moreFunctions": ["example.js", "mixelJoint.js"]
+	"moreFunctions": ["/absolute/path/to/example.js", "./custom/mixelJoint.js"]
 }

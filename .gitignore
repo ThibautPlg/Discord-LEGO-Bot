@@ -2,4 +2,6 @@ config.json
 node_modules/
 snippet.json
 *logs.txt
+out.*
+err.*
 custom/

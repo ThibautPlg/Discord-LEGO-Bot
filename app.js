@@ -27,7 +27,7 @@ client.on('message', postedMessage => {
                 getPartsInfos(args);
             break;
             case 'bl':
-                message.channel.send('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args);
+                postedMessage.channel.send('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args);
                 log("bl " + args);
             break;
             case 'bi':
@@ -35,7 +35,7 @@ client.on('message', postedMessage => {
                 getReview(args);
             break;
             case "bs":
-                message.channel.send('https://brickset.com/sets/'+args+'-1');
+                postedMessage.channel.send('https://brickset.com/sets/'+args+'-1');
                 log("bs " + args);
             break;
             case "LegBot":
@@ -43,7 +43,7 @@ client.on('message', postedMessage => {
                 showHelp();
             break;
             case "inviteLegBot":
-                client.generateInvite(['SEND_MESSAGES']).then(link=>message.author.send(link));
+                client.generateInvite(['SEND_MESSAGES']).then(link=>postedMessage.author.send(link));
                 log("invite");
             break;
             case "credits":
@@ -97,9 +97,13 @@ getSetInfos = function(setNumber) {
 
 	var set = askBrickset("getSets", "{'setNumber':'"+setNumber+"-1'}");
 
-    if (set.status && set.status !== "success") {
-        log("set-not-found " + setNumber);
+	if (set.matches <= 0) {
+		log("set-not-found " + setNumber);
 		channel.send("Set "+setNumber+" not found... ");
+		client.legBotMessage.react('🙄');
+	} else if (set.status && set.status !== "success") {
+        log("set-db-error " + setNumber);
+		channel.send("Ooops, something is wrong with my database... ");
 		client.legBotMessage.react('🙄');
     } else {
 		set = set.sets[0];
@@ -401,6 +405,6 @@ if (config && config.moreFunctions){
 		customFiles = [customFiles];
 	}
 	customFiles.forEach(customFile => {
-		eval(fs.readFileSync("./custom/"+customFile)+'');
+		eval(fs.readFileSync(customFile)+'');
 	});
 }

@@ -212,6 +212,7 @@ getPartsInfos = function(partNo) {
 	var key = "key="+config.rebrickableToken;
 	var color = "";
 
+	partNo = [partNo];
     //can be a BL or Rebrickable id
     var part = httpGet('https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&"+key); //2436b
 

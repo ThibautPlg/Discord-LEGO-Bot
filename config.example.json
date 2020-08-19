@@ -8,6 +8,5 @@
 		"logfile": "log.txt",
 		"debug": false
 	},
-	"piecesMax" : "2",
 	"moreFunctions": ["/absolute/path/to/example.js", "./custom/mixelJoint.js"]
 }

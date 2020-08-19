@@ -34,7 +34,7 @@ Since July 2020, LegBot has been invited to more than 100 servers ! Thank you ev
 </p>
 
 
-- `!part [PART ID]` to have informations about a piece (Bricklink id). You can add multiple pieces separated by a space (limit in config file)
+- `!part [PART ID]` to have informations about a piece (Bricklink id).
 <p align="center">
 	<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/part-example.png" alt="Parts Example"> <br> Green for pieces still produced, orange otherwise
 </p>
@@ -78,6 +78,10 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.4
+  - Removing the ability to search for multiple pieces (vers 1.2.1), it was not used
+  - Removing the corresponding config var (`piecesMax`)
+  - You can now pass a command in the middle of your sentence ! For a more natural flow.
 - 1.3.1
   - Fixing a crash on `!bl` and `!bs` commands.
   - Fixing a crash where no sets were found but with a success message from the API.

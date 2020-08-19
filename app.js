@@ -12,12 +12,17 @@ client.once('ready', () => {
 client.login(config.token);
 
 client.on('message', postedMessage => {
-    if (postedMessage.content.substring(0, 1) == config.trigger) {
-        var args = postedMessage.content.substring(1).split(' ');
-        var cmd = args[0];
+	var regex = new RegExp(config.trigger+'.*?', 'gi' );
+
+    if (postedMessage.content.match(regex)) {
+
+		var triggerLocation = postedMessage.content.indexOf(config.trigger);
+        var args = postedMessage.content.substring(triggerLocation+1, postedMessage.content.length).split(' ');
+		var cmd = args[0];
+		args = args[1];
+
 		client.legBotMessage = postedMessage;
 
-        args = args.splice(1);
         switch(cmd) {
             case '#':
             case 'set':
@@ -60,6 +65,11 @@ client.on('message', postedMessage => {
 /**************************  FUNCTIONS *******************************/
 
 getReview = function(set) {
+
+	if (!argumentIsValid(set, "review-no-id ")) {
+		return;
+	}
+
 	var channel = client.legBotMessage.channel;
 
     var review = httpGet('https://brickinsights.com/api/sets/'+set+'-1');
@@ -86,9 +96,7 @@ getReview = function(set) {
 getSetInfos = function(setNumber) {
 	var channel = client.legBotMessage.channel;
 
-	if (!setNumber.length) {
-        log("set-no-id " + setNumber);
-		client.legBotMessage.react('🤔');
+	if (!argumentIsValid(setNumber, "set-no-id ")) {
 		return;
 	}
 
@@ -164,7 +172,7 @@ showHelp = function() {
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
         .addField('Hey !', "Thanks for using this LEGO bot ! :kissing_smiling_eyes: \n To use me, type the following commands :")
         .addField('Commands : ', "`"+t+"# or "+t+"set [SET NUMBER]`  to have general usefull infos about the set number.\n"+
-        "`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id). You can add multiple pieces separated by a space.\n"+
+        "`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id).\n"+
         "`"+t+"mixeljoint`  to have the list of the most used mixeljoint (with an awesome drawing of each).\n"+
         "`"+t+"bs [SET NUMBER]`  to show a link to Brickset about the provided set number \n"+
         "`"+t+"bl [SET NUMBER]`  to show a BrickLink link to the searched set number \n"+
@@ -198,32 +206,11 @@ showCredits = function() {
 
 getPartsInfos = function(partNo) {
 
-	if (!partNo.length) {
-		// There is no part id given
-		log("part-no-id " + partNo);
-		client.legBotMessage.react('🤔');
-		return;
-	} else if (partNo.length > 1) {
-		partNo = partNo.filter(function(a){
-			// Remove text from message (prevent searching on involunteer text instead of piece number)
-			var filter = new RegExp(".*?\\d+.*?\\S","i");
-			return String(a).match(filter);
-		})
-
-		var piecesMax = config.piecesMax || "2";
-		//Multiple pieces searched
-		if (partNo.length > piecesMax) {
-			// Limiting to prevent message flooding
-			partNo = partNo.splice(0, piecesMax);
-			client.legBotMessage.channel.send("Hi **"+ message.author.username +"**, you asked for more than "+piecesMax+" pieces. To prevent flooding I'll show you only the "+piecesMax+" firsts");
-		}
-		partNo.forEach(part => {
-			getPartsInfos([part]);
-		});
+	if (!argumentIsValid(partNo, "part-no-id ")) {
 		return;
 	}
 	var key = "key="+config.rebrickableToken;
-    var color = "";
+	var color = "";
 
     //can be a BL or Rebrickable id
     var part = httpGet('https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&"+key); //2436b
@@ -267,7 +254,7 @@ getPartsInfos = function(partNo) {
             .addField('General', productionState + part.name +"\n \
                 Released in "+ part.year_from + ", at least produced until "+ part.year_to);
 
-            if(part.molds.length) {
+            if(part.molds && part.molds.length) {
                 partsInfo.addField("Similar to", getSimilarParts(part));
             }
 
@@ -374,6 +361,22 @@ formatPrice = function(set) {
 	var ppp = (price/set.pieces).toFixed(2);
     message += "Price per Piece ratio : **"+sign+ ppp +"**\n"
     return message;
+}
+
+/* Is my arg something valid ?
+* Returns true if the arg is a string containing letters and numbers
+*/
+argumentIsValid = function(arg, toLog) {
+	if (arg === undefined || arg.length < 1) {
+		log(toLog + arg);
+		client.legBotMessage.react('🤔');
+		return false;
+	} else if(!arg.match(/\w+/)) {
+		log("no args");
+		return false;
+	} else {
+		return true;
+	}
 }
 
 /********************************* Logs  *******************************/

@@ -21,8 +21,12 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 
 <p align="center">
 <img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/100servs.png" alt="100 servers">
+<strike>
 
-Since July 2020, LegBot has been invited to more than 100 servers ! Thank you everyone ! I hope the bot is doing right for your queries, do not forget to contact me on twitter if something goes wrong or is missing !
+Since July 2020, LegBot has been invited to more than 100 servers ! Thank you everyone ! I hope the bot is doing right for your queries, do not forget to contact me on twitter if something goes wrong or is missing !</strike>
+
+As of January 2021 LegBot is on almost 300 servers ! This is insane !
+Thanks you everyone !
 </p>
 <hr>
 
@@ -57,6 +61,8 @@ Since July 2020, LegBot has been invited to more than 100 servers ! Thank you ev
 This bot is based on the [discord.js](https://discord.js.org/) library.
 
 
+## Requirements :
+- NodeJS 12.x or higher
 ## Installation :
 - Clone this repo
 - Delete README.md and the readme.assets directory (optionnal)
@@ -78,6 +84,12 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.4.1
+  - LegBot is now able to fetch sets with hyphens ids (6862-1 or 6862-2 for example).
+    - The old way is still working, but will fetch the "-1" set by default.
+  - Updating the readme.md to say that LegBot is now on almost 300 servers !
+  - Brickset is now listing LegBot in their <a href="https://brickset.com/tools/apps">apps section !</a>
+  - Updating the discord.js lib to 12.x
 - 1.4
   - Removing the ability to search for multiple pieces (vers 1.2.1), it was not used
   - Removing the corresponding config var (`piecesMax`)

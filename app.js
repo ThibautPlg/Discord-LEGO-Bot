@@ -40,7 +40,7 @@ client.on('message', postedMessage => {
                 getReview(args);
             break;
             case "bs":
-                postedMessage.channel.send('https://brickset.com/sets/'+args+'-1');
+                postedMessage.channel.send('https://brickset.com/sets/'+parseSetID(args));
                 log("bs " + args);
             break;
             case "LegBot":
@@ -48,7 +48,7 @@ client.on('message', postedMessage => {
                 showHelp();
             break;
             case "inviteLegBot":
-                client.generateInvite(['SEND_MESSAGES']).then(link=>postedMessage.author.send(link));
+                client.generateInvite({permissions:['SEND_MESSAGES']}).then(link=>postedMessage.author.send(link));
                 log("invite");
             break;
             case "credits":
@@ -72,18 +72,18 @@ getReview = function(set) {
 
 	var channel = client.legBotMessage.channel;
 
-    var review = httpGet('https://brickinsights.com/api/sets/'+set+'-1');
+    var review = httpGet('https://brickinsights.com/api/sets/'+parseSetID(set));
     var message = '';
 
     if (review.error) {
         log("review-not-found " + set);
         message = review.error;
     } else {
-		message = new Discord.RichEmbed()
+		message = new Discord.MessageEmbed()
 		.setColor('#F2CD37')
 		.setTitle(review.name + ' ' + review.year)
 		.setURL(review.url)
-		.setThumbnail("https://brickinsights.com/storage/sets/"+set+"-1.jpg")
+		.setThumbnail("https://brickinsights.com/storage/sets/"+parseSetID(set)+".jpg")
 		.addField('Rated',review.name +" is rated **"+ review.average_rating + "/100**") /*+ ", belongs to the "+ set.primary_category.name +" category")*/
 		.addField('Links', "More reviews at [BrickInsignt]("+review.url+")")
 		.setFooter('Source : BrickInsignt');
@@ -100,10 +100,10 @@ getSetInfos = function(setNumber) {
 		return;
 	}
 
-	var BInsight = 'https://brickinsights.com/sets/'+setNumber+'-1';
+	var BInsight = 'https://brickinsights.com/sets/'+ parseSetID(setNumber);
     var BLlink = "https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber;
 
-	var set = askBrickset("getSets", "{'setNumber':'"+setNumber+"-1'}");
+	var set = askBrickset("getSets", "{'setNumber':'"+parseSetID(setNumber)+"'}");
 
 	if (set.matches <= 0) {
 		log("set-not-found " + setNumber);
@@ -126,7 +126,7 @@ getSetInfos = function(setNumber) {
 			notes = '\n'+set.extendedData.notes;
 		}
 
-        var setCard = new Discord.RichEmbed()
+        var setCard = new Discord.MessageEmbed()
             .setColor('#F2CD37')
             .setTitle(set.number + ' ' + set.name)
             .setURL(set.bricksetURL)
@@ -148,7 +148,7 @@ getSetInfos = function(setNumber) {
 }
 
 showStats = function() {
-    var stats = new Discord.RichEmbed()
+    var stats = new Discord.MessageEmbed()
         .setColor("#3F51B5")
         .setTitle("LegBot")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
@@ -157,16 +157,16 @@ showStats = function() {
         .addField('Uptime', (process.uptime() + "").toHHMMSS(), true)
         .addField('Version', package.version, true)
         .addField('\u200b', '\u200b', true)
-        .addField('Server count', client.guilds.size, true)
-        .addField('Total channels', client.channels.size, true)
-        .addField('Total users', client.users.size, true);
+        .addField('Server count', client.guilds.cache.size, true)
+        .addField('Total channels', client.channels.cache.size, true)
+        .addField('Total users', client.users.cache.size, true);
     log("stats");
     client.legBotMessage.author.send(stats);
 }
 
 showHelp = function() {
     var t = config.trigger;
-    var help = new Discord.RichEmbed()
+    var help = new Discord.MessageEmbed()
         .setColor("#009688")
         .setTitle("LegBot help")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
@@ -185,7 +185,7 @@ showHelp = function() {
 }
 
 showCredits = function() {
-    var credits = new Discord.RichEmbed()
+    var credits = new Discord.MessageEmbed()
         .setColor("#03A9F4")
         .setTitle("LegBot")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
@@ -247,7 +247,7 @@ getPartsInfos = function(partNo) {
             color = "#F2CD37";
         }
 
-        const partsInfo = new Discord.RichEmbed()
+        const partsInfo = new Discord.MessageEmbed()
             .setColor(color)
             .setTitle(part.name)
             .setURL(part.part_url)
@@ -377,6 +377,17 @@ argumentIsValid = function(arg, toLog) {
 		return false;
 	} else {
 		return true;
+	}
+}
+/* Check if given string has a "-n" format,
+* if not add "-1" to catch the first set
+* for example, it exists 6862-1 (M-Tron) and 6862-2 (DC Super Heroes)
+*/
+parseSetID = function(setId) {
+	if (setId.match(/\-\d$/gim)) {
+		return setId;
+	} else {
+		return setId+'-1';
 	}
 }
 

@@ -13,9 +13,10 @@ client.login(config.token);
 
 client.on("message", (postedMessage) => {
   var regex = new RegExp(config.trigger + ".*?", "gi");
+  var matches = postedMessage.content.matchAll(regex);
 
-  if (postedMessage.content.match(regex)) {
-    var triggerLocation = postedMessage.content.indexOf(config.trigger);
+  for (var match of matches) {
+    var triggerLocation = match.index;
     var args = postedMessage.content
       .substring(triggerLocation + 1, postedMessage.content.length)
       .split(" ");

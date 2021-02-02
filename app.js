@@ -384,7 +384,7 @@ argumentIsValid = function(arg, toLog) {
 * for example, it exists 6862-1 (M-Tron) and 6862-2 (DC Super Heroes)
 */
 parseSetID = function(setId) {
-	if (setId.match(/\-\d$/gim)) {
+	if (setId.match(/\-\d*$/gim)) {
 		return setId;
 	} else {
 		return setId+'-1';

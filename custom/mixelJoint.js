@@ -59,7 +59,7 @@ getMixelJoints = function() {
 		}
 	]
 
-	const mixelMessage = new Discord.RichEmbed()
+	const mixelMessage = new Discord.MessageEmbed()
 		.setColor("#673AB7")
 		.setTitle("Mixel Joints");
 

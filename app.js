@@ -4,6 +4,7 @@ var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const config = require('./config.json');
 const package = require('./package.json');
 const fs = require('fs');
+const fetch = require('node-fetch');
 
 client.once('ready', () => {
     console.log('LegBot is Online !');

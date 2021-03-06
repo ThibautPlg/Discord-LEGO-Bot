@@ -1,10 +1,10 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
-var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const config = require('./config.json');
 const package = require('./package.json');
 const fs = require('fs');
 const fetch = require('node-fetch');
+const { URLSearchParams } = require('url');
 
 client.once('ready', () => {
     console.log('LegBot is Online !');
@@ -65,7 +65,7 @@ client.on('message', postedMessage => {
 
 /**************************  FUNCTIONS *******************************/
 
-getReview = function(set) {
+getReview = async function(set) {
 
 	if (!argumentIsValid(set, "review-no-id ")) {
 		return;
@@ -73,28 +73,34 @@ getReview = function(set) {
 
 	var channel = client.legBotMessage.channel;
 
-    var review = httpGet('https://brickinsights.com/api/sets/'+parseSetID(set));
-    var message = '';
+    var review = await fetch('https://brickinsights.com/api/sets/'+parseSetID(set)).then(
+		response => response.json(),
+		err => {
+			log("review-error " + set);
+			channel.send("It looks like Brickinsights is down, I can't get my data ! 😐");
+		}
+	);
 
-    if (review.error) {
-        log("review-not-found " + set);
-        message = review.error;
-    } else {
+    if (review && !review.error) {
+		rating = review.average_rating ? review.average_rating : "?";
 		message = new Discord.MessageEmbed()
 		.setColor('#F2CD37')
 		.setTitle(review.name + ' ' + review.year)
 		.setURL(review.url)
 		.setThumbnail("https://brickinsights.com/storage/sets/"+parseSetID(set)+".jpg")
-		.addField('Rated',review.name +" is rated **"+ review.average_rating + "/100**") /*+ ", belongs to the "+ set.primary_category.name +" category")*/
+		.addField('Rated',review.name +" is rated **"+ rating + "/100**") /*+ ", belongs to the "+ set.primary_category.name +" category")*/
 		.addField('Links', "More reviews at [BrickInsignt]("+review.url+")")
 		.setFooter('Source : BrickInsignt');
 
 		log("review " + set);
-    }
+    } else if (review){
+		log("review-not-found " + set);
+		message = "There is no reviews available on Brickinsights.com for the set "+set
+	}
 	channel.send(message);
 }
 
-getSetInfos = function(setNumber) {
+getSetInfos = async function(setNumber) {
 	var channel = client.legBotMessage.channel;
 
 	if (!argumentIsValid(setNumber, "set-no-id ")) {
@@ -104,7 +110,7 @@ getSetInfos = function(setNumber) {
 	var BInsight = 'https://brickinsights.com/sets/'+ parseSetID(setNumber);
     var BLlink = "https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber;
 
-	var set = askBrickset("getSets", "{'setNumber':'"+parseSetID(setNumber)+"'}");
+	var set = await askBrickset("getSets", "{'setNumber':'"+parseSetID(setNumber)+"'}");
 
 	if (set.matches <= 0) {
 		log("set-not-found " + setNumber);
@@ -131,7 +137,7 @@ getSetInfos = function(setNumber) {
             .setColor('#F2CD37')
             .setTitle(set.number + ' ' + set.name)
             .setURL(set.bricksetURL)
-            .setThumbnail(set.image.imageURL)
+            .setThumbnail(thumbnail)
             .addField('General',"Released in **"+ set.year + "**, belongs to the **"+ set.theme +"** category"+notes)
 			.addField('Pieces', "Made of **" + set.pieces +"** parts", true);
 
@@ -205,7 +211,7 @@ showCredits = function() {
     client.legBotMessage.author.send(credits);
 }
 
-getPartsInfos = function(partNo) {
+getPartsInfos = async function(partNo, retry) {
 
 	if (!argumentIsValid(partNo, "part-no-id ")) {
 		return;
@@ -213,68 +219,80 @@ getPartsInfos = function(partNo) {
 	var key = "key="+config.rebrickableToken;
 	var color = "";
 
-	partNo = [partNo];
     //can be a BL or Rebrickable id
-    var part = httpGet('https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&"+key); //2436b
+    var part = 'https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&inc_part_details=1&"+key; //2436b
 
-    if (part && part.count >= 1) {
-        var rebrickableNo = part.results['0'].part_num; //10201
-        var productionState = '';
-
-        var bricklinkId = part.results['0'].external_ids.BrickLink;
-        var bricklinkUrl = 'https://www.bricklink.com/v2/search.page?q='+rebrickableNo;
-        if (bricklinkId) {
-           bricklinkUrl = "https://www.bricklink.com/v2/catalog/catalogitem.page?P="+ bricklinkId
-        }
-        var brickOwlId = part.results['0'].external_ids.BrickOwl;
-        var brickOwlUrl = 'https://www.brickowl.com/search/catalog?query=266404'+rebrickableNo;
-        if (brickOwlId) {
-            brickOwlUrl = "https://www.brickowl.com/search/catalog?query=266404"+ brickOwlId
-        }
-        var legoId = part.results['0'].external_ids.LEGO ? part.results['0'].external_ids.LEGO : rebrickableNo;
-        var legoUrl = 'https://www.lego.com/fr-fr/page/static/pick-a-brick?query='+legoId;
-
-        if (rebrickableNo !== partNo) {
-            //We need to query with the rebrickable ID to have further informations.
-            var part = httpGet('https://rebrickable.com/api/v3/lego/parts/'+rebrickableNo+"/?" + key);
-        }
-
-        if(new Date().getFullYear() <= part.year_to) {
-            // Still in production ?
-            productionState = "[:green_circle: Still in production !] \n";
-            color = "#8BC34A";
-        } else {
-            productionState = "[:orange_circle:  No more produced] \n";
-            color = "#F2CD37";
-        }
-
-        const partsInfo = new Discord.MessageEmbed()
-            .setColor(color)
-            .setTitle(part.name)
-            .setURL(part.part_url)
-            .setThumbnail(part.part_img_url)
-            .addField('General', productionState + part.name +"\n \
-                Released in "+ part.year_from + ", at least produced until "+ part.year_to);
-
-            if(part.molds && part.molds.length) {
-                partsInfo.addField("Similar to", getSimilarParts(part));
-            }
-
-            partsInfo
-            .addField('Shop : ', "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", true)
-            .setFooter('Source : '+ part.part_url);
-
-            client.legBotMessage.channel.send(partsInfo);
-            log("part " + partNo);
-    } else {
-		client.legBotMessage.channel.send("I'm so sorry **"+ client.legBotMessage.author.username +"**, I didn't find the part you were looking for. :(");
-		client.legBotMessage.react('🙄')
-        log("part-not-found " + partNo);
+	if(!!retry) {
+		part = 'https://rebrickable.com/api/v3/lego/parts/?search='+partNo+"&inc_part_details=1&"+key; //35164 is 42022
 	}
-	if(!part) {
-		client.legBotMessage.channel.send("It looks like Rebrickable is down, I can't get my data ! 😐");
-		client.legBotMessage.react('😐')
-        log("part-not-found-down " + partNo);
+
+	var part = await fetch(part).then(
+		response => response.json(),
+		err => {
+			client.legBotMessage.channel.send("It looks like Rebrickable is down, I can't get my data ! 😐");
+			client.legBotMessage.react('😐')
+			log("part-not-found-down " + partNo);
+		}
+	);
+	console.log(part);
+
+	if (part && part.count >= 1) {
+
+		part = part.results[0];
+
+		var rebrickableNo = part.part_num; //10201
+		var productionState = '';
+
+		var bricklinkId = part.external_ids.BrickLink;
+		var bricklinkUrl = 'https://www.bricklink.com/v2/search.page?q='+rebrickableNo;
+		if (bricklinkId) {
+		bricklinkUrl = "https://www.bricklink.com/v2/catalog/catalogitem.page?P="+ bricklinkId
+		}
+		var brickOwlId = part.external_ids.BrickOwl;
+		var brickOwlUrl = 'https://www.brickowl.com/search/catalog?query=266404'+rebrickableNo;
+		if (brickOwlId) {
+			brickOwlUrl = "https://www.brickowl.com/search/catalog?query=266404"+ brickOwlId
+		}
+		var legoId = part.external_ids.LEGO ? part.external_ids.LEGO : rebrickableNo;
+		var legoUrl = 'https://www.lego.com/fr-fr/page/static/pick-a-brick?query='+legoId;
+
+
+		if(new Date().getFullYear() <= part.year_to) {
+			// Still in production ?
+			productionState = "[:green_circle: Still in production !] \n";
+			color = "#8BC34A";
+		} else {
+			productionState = "[:orange_circle:  No more produced] \n";
+			color = "#F2CD37";
+		}
+
+		const partsInfo = new Discord.MessageEmbed()
+			.setColor(color)
+			.setTitle(part.name)
+			.setURL(part.part_url)
+			.setThumbnail(part.part_img_url)
+			.addField('General', productionState + part.name +"\n \
+				Released in "+ part.year_from + ", at least produced until "+ part.year_to);
+
+			if(part.molds && part.molds.length) {
+				partsInfo.addField("Similar to", getSimilarParts(part));
+			}
+
+			partsInfo
+			.addField('Shop : ', "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", true)
+			.setFooter('Source : '+ part.part_url);
+
+		client.legBotMessage.channel.send(partsInfo);
+		log("part " + partNo);
+	} else if (part){
+		if (!retry) {
+			/* First time we failed, let's try to use the "search" feature of Rebrickable ! */
+			getPartsInfos(partNo, true);
+		} else {
+			client.legBotMessage.channel.send("I'm so sorry **"+ client.legBotMessage.author.username +"**, I didn't find the part you were looking for. :(");
+			client.legBotMessage.react('🙄')
+			log("part-not-found " + partNo);
+		}
 	}
 }
 
@@ -300,16 +318,6 @@ var getSimilarParts = function(part) {
 
 /*************************   Stuff used by function      ****************************/
 
-httpGet = function(theUrl) {
-    var xmlHttp = new XMLHttpRequest();
-	xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
-	xmlHttp.timeout = 5000; //5 sec of timeout
-    xmlHttp.send( null );
-    // return xmlHttp.responseText;
-    var data = JSON.parse(xmlHttp.responseText) ? JSON.parse(xmlHttp.responseText) : false;
-    return data;
-}
-
 String.prototype.toHHMMSS = function () {
     var sec_num = parseInt(this, 10); // don't forget the second param
     var hours   = Math.floor(sec_num / 3600);
@@ -323,23 +331,22 @@ String.prototype.toHHMMSS = function () {
     return time;
 }
 
-askBrickset = function(endpoint, what) {
+askBrickset = async function(endpoint, what) {
 	var baseUrl = 'https://brickset.com/api/v3.asmx/';
 	var url = baseUrl+endpoint;
 
-	request = "apiKey="+config.bricksetApiKey;
-	request += "&userhash=";
-	request += "&params="+what;
+	var params = new URLSearchParams();
+	params.append('apiKey', config.bricksetApiKey);
+	params.append('userhash', '');
+	params.append('params', what);
 
-
-	var xmlHttp = new XMLHttpRequest();
-	xmlHttp.open( "POST", url, false );
-	xmlHttp.timeout = 5000; //5 sec of timeout
-	xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xmlHttp.send(request);
-
-    var data = JSON.parse(xmlHttp.responseText) ? JSON.parse(xmlHttp.responseText) : false;
-    return data;
+	var data = await fetch(url, {method: "POST", body: params}).then(
+		response => response.json(),
+		err => {
+			return false;
+		}
+	);
+	return data;
 }
 
 formatPrice = function(set) {

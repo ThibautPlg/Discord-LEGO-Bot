@@ -1,17 +1,13 @@
 # LegBot : The LEGO Discord bot
 
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+![npm](https://img.shields.io/npm/v/discord.js?label=discord.js&style=flat-square)
+![nodejs](https://img.shields.io/badge/nodejs-12.x-brightgreen?style=flat-square&logo=Node.js)
+
 <!-- > Yes, hybdid html markdown, sorry :( <--->
 
 <p align="center">
-<table style="width:100%; border: none;" align="center">
-<td style="width:49%; border: none;">
 <img height="100" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/legBot.png" alt="Logo">
-</td>
-<td style="width:49%; border: none;">
-<img src="https://discordbots.org/api/widget/status/666184693531672608.svg" alt="Status">
-</td>
-</div>
-</table>
 </p>
 
 This LEGO Discord bot is used to show general informations about LEGO sets and parts in chat.
@@ -25,7 +21,7 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 
 Since July 2020, LegBot has been invited to more than 100 servers ! Thank you everyone ! I hope the bot is doing right for your queries, do not forget to contact me on twitter if something goes wrong or is missing !</strike>
 
-As of January 2021 LegBot is on almost 300 servers ! This is insane !
+As of February 2021 LegBot is on more than 300 servers ! This is insane !
 Thanks you everyone !
 </p>
 <hr>
@@ -84,6 +80,13 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.4.3
+  - All REST requests are now using the async node-fetch way.
+  - Improving the `!part` search by doing a second request if the first one did not find anything.
+  - Adding badges to the README.md
+- 1.4.2
+  - Adding a custom command to fetch the Brickset's random set of the day
+    - Require an external php script (at the moment)
 - 1.4.1
   - LegBot is now able to fetch sets with hyphens ids (6862-1 or 6862-2 for example).
     - The old way is still working, but will fetch the "-1" set by default.

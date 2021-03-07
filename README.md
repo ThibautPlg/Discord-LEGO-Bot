@@ -1,6 +1,5 @@
 # LegBot : The LEGO Discord bot
 
-[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 ![npm](https://img.shields.io/npm/v/discord.js?label=discord.js&style=flat-square)
 ![nodejs](https://img.shields.io/badge/nodejs-12.x-brightgreen?style=flat-square&logo=Node.js)
 

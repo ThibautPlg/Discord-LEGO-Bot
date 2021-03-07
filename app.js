@@ -7,8 +7,7 @@ const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
 
 client.once('ready', () => {
-    console.log('LegBot is Online !');
-    log("Fresh start")
+    log("restart,"+package.version)
 });
 client.login(config.token);
 
@@ -34,7 +33,7 @@ client.on('message', postedMessage => {
             break;
             case 'bl':
                 postedMessage.channel.send('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args);
-                log("bl " + args);
+                log("bl," + args);
             break;
             case 'bi':
             case "review":
@@ -42,7 +41,7 @@ client.on('message', postedMessage => {
             break;
             case "bs":
                 postedMessage.channel.send('https://brickset.com/sets/'+parseSetID(args));
-                log("bs " + args);
+                log("bs," + args);
             break;
             case "LegBot":
             case "help":
@@ -50,7 +49,7 @@ client.on('message', postedMessage => {
             break;
             case "inviteLegBot":
                 client.generateInvite({permissions:['SEND_MESSAGES']}).then(link=>postedMessage.author.send(link));
-                log("invite");
+                log("invite,"+package.version);
             break;
             case "credits":
                 showCredits();
@@ -67,7 +66,7 @@ client.on('message', postedMessage => {
 
 getReview = async function(set) {
 
-	if (!argumentIsValid(set, "review-no-id ")) {
+	if (!argumentIsValid(set, "review-no-id,")) {
 		return;
 	}
 
@@ -76,7 +75,7 @@ getReview = async function(set) {
     var review = await fetch('https://brickinsights.com/api/sets/'+parseSetID(set)).then(
 		response => response.json(),
 		err => {
-			log("review-error " + set);
+			log("review-db-error," + set);
 			channel.send("It looks like Brickinsights is down, I can't get my data ! 😐");
 		}
 	);
@@ -92,9 +91,9 @@ getReview = async function(set) {
 		.addField('Links', "More reviews at [BrickInsignt]("+review.url+")")
 		.setFooter('Source : BrickInsignt');
 
-		log("review " + set);
+		log("review," + set);
     } else if (review){
-		log("review-not-found " + set);
+		log("review-not-found," + set);
 		message = "There is no reviews available on Brickinsights.com for the set "+set
 	}
 	channel.send(message);
@@ -103,7 +102,7 @@ getReview = async function(set) {
 getSetInfos = async function(setNumber) {
 	var channel = client.legBotMessage.channel;
 
-	if (!argumentIsValid(setNumber, "set-no-id ")) {
+	if (!argumentIsValid(setNumber, "set-no-id,")) {
 		return;
 	}
 
@@ -113,11 +112,11 @@ getSetInfos = async function(setNumber) {
 	var set = await askBrickset("getSets", "{'setNumber':'"+parseSetID(setNumber)+"'}");
 
 	if (set.matches <= 0) {
-		log("set-not-found " + setNumber);
+		log("set-not-found," + setNumber);
 		channel.send("Set "+setNumber+" not found... ");
 		client.legBotMessage.react('🙄');
 	} else if (set.status && set.status !== "success") {
-        log("set-db-error " + setNumber);
+        log("set-db-error," + setNumber);
 		channel.send("Ooops, something is wrong with my database... ");
 		client.legBotMessage.react('🙄');
     } else {
@@ -149,7 +148,7 @@ getSetInfos = async function(setNumber) {
 				.addField('Links', "[Brickset]("+set.bricksetURL+")   -   [Bricklink]("+BLlink+")   -   [BrickInsight]("+BInsight+")")
 				.setFooter('Source : Brickset');
 
-        log("set " + setNumber);
+        log("set," + setNumber);
         channel.send(setCard);
     }
 }
@@ -167,7 +166,7 @@ showStats = function() {
         .addField('Server count', client.guilds.cache.size, true)
         .addField('Total channels', client.channels.cache.size, true)
         .addField('Total users', client.users.cache.size, true);
-    log("stats");
+    log("stats,"+package.version);
     client.legBotMessage.author.send(stats);
 }
 
@@ -187,7 +186,7 @@ showHelp = function() {
         "`"+t+"help`  to display this message... Not that useful if you're reading this tho. \n "+
         "`"+t+"inviteLegBot` to get a link to invite LegBot to your server. \n \n"+
         "`"+t+"credits`  to show dev credits");
-    log("help");
+    log("help,"+package.version);
     client.legBotMessage.author.send(help);
 }
 
@@ -207,13 +206,13 @@ showCredits = function() {
         - BrickOwl links : https://www.brickowl.com\n")
         .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
         .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
-    log("credits");
+    log("credits,"+package.version);
     client.legBotMessage.author.send(credits);
 }
 
 getPartsInfos = async function(partNo, retry) {
 
-	if (!argumentIsValid(partNo, "part-no-id ")) {
+	if (!argumentIsValid(partNo, "part-no-id,")) {
 		return;
 	}
 	var key = "key="+config.rebrickableToken;
@@ -231,10 +230,9 @@ getPartsInfos = async function(partNo, retry) {
 		err => {
 			client.legBotMessage.channel.send("It looks like Rebrickable is down, I can't get my data ! 😐");
 			client.legBotMessage.react('😐')
-			log("part-not-found-down " + partNo);
+			log("part-db-error," + partNo);
 		}
 	);
-	console.log(part);
 
 	if (part && part.count >= 1) {
 
@@ -283,7 +281,7 @@ getPartsInfos = async function(partNo, retry) {
 			.setFooter('Source : '+ part.part_url);
 
 		client.legBotMessage.channel.send(partsInfo);
-		log("part " + partNo);
+		log("part," + partNo);
 	} else if (part){
 		if (!retry) {
 			/* First time we failed, let's try to use the "search" feature of Rebrickable ! */
@@ -291,7 +289,7 @@ getPartsInfos = async function(partNo, retry) {
 		} else {
 			client.legBotMessage.channel.send("I'm so sorry **"+ client.legBotMessage.author.username +"**, I didn't find the part you were looking for. :(");
 			client.legBotMessage.react('🙄')
-			log("part-not-found " + partNo);
+			log("part-not-found," + partNo);
 		}
 	}
 }
@@ -381,7 +379,7 @@ argumentIsValid = function(arg, toLog) {
 		client.legBotMessage.react('🤔');
 		return false;
 	} else if(!arg.match(/\w+/)) {
-		log("no args");
+		log("no args,"+package.version);
 		return false;
 	} else {
 		return true;
@@ -411,8 +409,8 @@ if (config && config.log && config.log.active) {
 
 log = function(msg) {
     if (config && config.log && config.log.active && !!logger) {
-		logger.write((new Date).toISOString().slice(0,19) + "  " + msg + "\n");
-		console.log((new Date).toISOString().slice(0,19) + "  " + msg + "\n");
+		logger.write((new Date).toISOString().slice(0,19) + "," + msg + "\n");
+		console.log((new Date).toISOString().slice(0,19) + "," + msg + "\n");
 	}
 }
 

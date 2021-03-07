@@ -83,6 +83,7 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
   - All REST requests are now using the async node-fetch way.
   - Improving the `!part` search by doing a second request if the first one did not find anything.
   - Adding badges to the README.md
+  - Updating the log system to be csv-parsing compatible
 - 1.4.2
   - Adding a custom command to fetch the Brickset's random set of the day
     - Require an external php script (at the moment)

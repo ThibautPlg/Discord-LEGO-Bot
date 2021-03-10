@@ -14,6 +14,8 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 [Website](https://thibautplg.github.io/legbot/)
 <hr>
 
+# :warning: **Due to a major incident on LegBot's hosting service, he will be down until (at least) march 19th**. :warning:
+
 <p align="center">
 <img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/100servs.png" alt="100 servers">
 <strike>

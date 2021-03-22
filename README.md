@@ -14,15 +14,14 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 [Website](https://thibautplg.github.io/legbot/)
 <hr>
 
-# :warning: **Due to a major incident on LegBot's hosting service, he will be down until (at least) march 19th**. :warning:
-
 <p align="center">
 <img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/100servs.png" alt="100 servers">
 <strike>
 
 Since July 2020, LegBot has been invited to more than 100 servers ! Thank you everyone ! I hope the bot is doing right for your queries, do not forget to contact me on twitter if something goes wrong or is missing !</strike>
 
-As of February 2021 LegBot is on more than 300 servers ! This is insane !
+<strike>As of February 2021 LegBot is on more than 300 servers ! This is insane !</strike>
+March 2021 : 400 ! I'll consider adding a tag instead of editing this file.
 Thanks you everyone !
 </p>
 <hr>

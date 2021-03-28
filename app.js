@@ -381,6 +381,16 @@ argumentIsValid = function(arg, toLog) {
 	} else if(!arg.match(/\w+/)) {
 		log("no args,"+package.version);
 		return false;
+	} else if((bannedSearches.indexOf(arg) > -1)) {
+		if(arg.match(/69/)) {
+			client.legBotMessage.react('🥵');
+			client.legBotMessage.react('😳');
+		}
+		if(arg.match(/420/)) {
+			client.legBotMessage.react('🤯');
+		}
+		log("well,"+arg);
+		return false;
 	} else {
 		return true;
 	}
@@ -429,3 +439,19 @@ if (config && config.moreFunctions){
 		eval(fs.readFileSync(customFile)+'');
 	});
 }
+
+
+/*********************** Banned searchs *********************/
+/* Because searching the !set 69 is very funny, but uses bandwidth
+and resources ! This list is based on logs analysis.*/
+const bannedSearches = [
+	"1",
+	"1234",
+	"12345",
+	"69",
+	"069",
+	"0069",
+	"69420",
+	"420420",
+	"696969"
+]

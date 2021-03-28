@@ -80,6 +80,8 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.4.4
+  - Blacklist some queries ! `!set 69` is a very fun search, but uses bandwidth and server resources.
 - 1.4.3
   - All REST requests are now using the async node-fetch way.
   - Improving the `!part` search by doing a second request if the first one did not find anything.

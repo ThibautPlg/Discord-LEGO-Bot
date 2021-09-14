@@ -1,7 +1,7 @@
 # LegBot : The LEGO Discord bot
 
 ![npm](https://img.shields.io/npm/v/discord.js?label=discord.js&style=flat-square)
-![nodejs](https://img.shields.io/badge/nodejs-12.x-brightgreen?style=flat-square&logo=Node.js)
+![nodejs](https://img.shields.io/badge/nodejs-16.x-brightgreen?style=flat-square&logo=Node.js)
 
 <!-- > Yes, hybdid html markdown, sorry :( <--->
 
@@ -20,8 +20,8 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 
 Since July 2020, LegBot has been invited to more than 100 servers ! Thank you everyone ! I hope the bot is doing right for your queries, do not forget to contact me on twitter if something goes wrong or is missing !</strike>
 
-<strike>As of February 2021 LegBot is on more than 300 servers ! This is insane !</strike>
-March 2021 : 400 ! I'll consider adding a tag instead of editing this file.
+<strike>As of February 2021 LegBot is on more than 300 servers ! This is insane !
+March 2021 : 400 ! I'll consider adding a tag instead of editing this file.</strike> September 2021 : almost 600 !
 Thanks you everyone !
 </p>
 <hr>
@@ -58,7 +58,7 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 
 ## Requirements :
-- NodeJS 12.x or higher
+- NodeJS 16.x or higher
 ## Installation :
 - Clone this repo
 - Delete README.md and the readme.assets directory (optionnal)
@@ -80,6 +80,13 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.5
+  - Adding the `instructions` section to a set query. Thanks @"Commander Purple" on top.gg for the idea !
+  - Adding the AGPL licence.
+  - Updating nodejs to v16.x
+  - Updating discord.js to 13.x
+  - Adding a beta feature to search for sets using `!search Piruk` for example.
+  - Adding the `maximumSearchResults` correspondig var to limit the bot output.
 - 1.4.4
   - Blacklist some queries ! `!set 69` is a very fun search, but uses bandwidth and server resources.
 - 1.4.3

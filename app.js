@@ -1,5 +1,5 @@
-const Discord = require('discord.js');
-const client = new Discord.Client();
+const { Client, Intents, MessageEmbed, Permissions } = require('discord.js');
+const client = new Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.DIRECT_MESSAGES] });
 const config = require('./config.json');
 const package = require('./package.json');
 const fs = require('fs');
@@ -11,7 +11,7 @@ client.once('ready', () => {
 });
 client.login(config.token);
 
-client.on('message', postedMessage => {
+client.on('messageCreate', postedMessage => {
 	var regex = new RegExp(config.trigger+'.*?', 'gi' );
 
     if (postedMessage.content.match(regex)) {
@@ -19,6 +19,7 @@ client.on('message', postedMessage => {
 		var triggerLocation = postedMessage.content.indexOf(config.trigger);
         var args = postedMessage.content.substring(triggerLocation+1, postedMessage.content.length).split(' ');
 		var cmd = args[0];
+		var argsSentence = args.slice(1).join(' ');
 		args = args[1];
 
 		client.legBotMessage = postedMessage;
@@ -48,7 +49,7 @@ client.on('message', postedMessage => {
                 showHelp();
             break;
             case "inviteLegBot":
-                client.generateInvite({permissions:['SEND_MESSAGES']}).then(link=>postedMessage.author.send(link));
+				postedMessage.author.send(client.generateInvite({scopes: ['bot'],permissions: [Permissions.DEFAULT] }));
                 log("invite,"+package.version);
             break;
             case "credits":
@@ -57,6 +58,9 @@ client.on('message', postedMessage => {
             case "botinfo":
                 showStats();
             break;
+			case "search":
+				searchBrickset(argsSentence);
+			break;
          }
      }
 });
@@ -82,7 +86,7 @@ getReview = async function(set) {
 
     if (review && !review.error) {
 		rating = review.average_rating ? review.average_rating : "?";
-		message = new Discord.MessageEmbed()
+		message = new MessageEmbed()
 		.setColor('#F2CD37')
 		.setTitle(review.name + ' ' + review.year)
 		.setURL(review.url)
@@ -96,7 +100,7 @@ getReview = async function(set) {
 		log("review-not-found," + set);
 		message = "There is no reviews available on Brickinsights.com for the set "+set
 	}
-	channel.send(message);
+	channel.send({ embeds: [message]});
 }
 
 getSetInfos = async function(setNumber) {
@@ -109,7 +113,7 @@ getSetInfos = async function(setNumber) {
 	var BInsight = 'https://brickinsights.com/sets/'+ parseSetID(setNumber);
     var BLlink = "https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber;
 
-	var set = await askBrickset("getSets", "{'setNumber':'"+parseSetID(setNumber)+"'}");
+	var set = await askBrickset("getSets", "params", "{'setNumber':'"+parseSetID(setNumber)+"'}");
 
 	if (set.matches <= 0) {
 		log("set-not-found," + setNumber);
@@ -121,6 +125,7 @@ getSetInfos = async function(setNumber) {
 		client.legBotMessage.react('🙄');
     } else {
 		set = set.sets[0];
+		var instructions = await askBrickset("getInstructions2", "setNumber", set.number);
 		let thumbnail = "";
 		if(set.image && set.image.imageURL) {
 			thumbnail = set.image.imageURL;
@@ -132,7 +137,7 @@ getSetInfos = async function(setNumber) {
 			notes = '\n'+set.extendedData.notes;
 		}
 
-        var setCard = new Discord.MessageEmbed()
+        var setCard = new MessageEmbed()
             .setColor('#F2CD37')
             .setTitle(set.number + ' ' + set.name)
             .setURL(set.bricksetURL)
@@ -145,16 +150,63 @@ getSetInfos = async function(setNumber) {
 		}
 
 		setCard.addField('Price', formatPrice(set))
-				.addField('Links', "[Brickset]("+set.bricksetURL+")   -   [Bricklink]("+BLlink+")   -   [BrickInsight]("+BInsight+")")
-				.setFooter('Source : Brickset');
+				.addField('Links', "[Brickset]("+set.bricksetURL+")   -   [Bricklink]("+BLlink+")   -   [BrickInsight]("+BInsight+")");
+
+		if(instructions.matches && instructions.matches >=1) {
+			let instructionsList = "";
+			for (let i = 0; i < instructions.instructions.length; i++) {
+				const booklet = instructions.instructions[i];
+				if(i < 5) {
+					// Do not show more than 5 links !
+					instructionsList += "["+(i+1)+"]("+booklet.URL+")  ";
+				}
+			}
+			setCard.addField('Instructions', instructionsList);
+		}
+
+		setCard.setFooter('Source : Brickset');
 
         log("set," + setNumber);
-        channel.send(setCard);
+        channel.send({ embeds: [setCard]});
     }
 }
 
+/* beta */
+searchBrickset = async function(query) {
+	var channel = client.legBotMessage.channel;
+
+	var sets = await askBrickset("getSets", "params", "{'query':'"+query+"'}");
+
+	var matches = sets.matches;
+	var apiFinds = sets.sets;
+	apiFinds = apiFinds.slice(0, config.maximumSearchResults);
+
+	if(matches && matches > 1) {
+		var answer = new MessageEmbed()
+			.setColor('#F2CD37')
+			.setTitle(matches + ' results found !')
+			.setThumbnail(apiFinds[0].image.imageURL)
+
+		apiFinds.forEach(set => {
+			answer
+			.addField(set.number, "["+set.name+"]("+set.bricksetURL+") ("+set.year+")");
+		});
+
+		answer.setFooter('Use `!set {set number}` to see more !');
+		channel.send({ embeds: [answer]});
+		log("search,"+query);
+	} else if(matches === 1) {
+		log("search-direct-result,"+query);
+		getSetInfos(String(apiFinds[0].number+"-"+apiFinds[0].numberVariant));
+	} else {
+		log("search-not-found,"+query);
+		client.legBotMessage.channel.send("Nothing found for \""+query+"\".");
+	}
+}
+
 showStats = function() {
-    var stats = new Discord.MessageEmbed()
+
+    var stats = new MessageEmbed()
         .setColor("#3F51B5")
         .setTitle("LegBot")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
@@ -163,16 +215,16 @@ showStats = function() {
         .addField('Uptime', (process.uptime() + "").toHHMMSS(), true)
         .addField('Version', package.version, true)
         .addField('\u200b', '\u200b', true)
-        .addField('Server count', client.guilds.cache.size, true)
-        .addField('Total channels', client.channels.cache.size, true)
-        .addField('Total users', client.users.cache.size, true);
+        .addField('Server count', String((client.guilds.cache).size), true)
+        .addField('Total channels', String((client.channels.cache).size), true)
+        .addField('Total users', String((client.users.cache).size), true);
     log("stats,"+package.version);
-    client.legBotMessage.author.send(stats);
+    client.legBotMessage.author.send({ embeds: [stats]});
 }
 
 showHelp = function() {
     var t = config.trigger;
-    var help = new Discord.MessageEmbed()
+    var help = new MessageEmbed()
         .setColor("#009688")
         .setTitle("LegBot help")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
@@ -187,11 +239,11 @@ showHelp = function() {
         "`"+t+"inviteLegBot` to get a link to invite LegBot to your server. \n \n"+
         "`"+t+"credits`  to show dev credits");
     log("help,"+package.version);
-    client.legBotMessage.author.send(help);
+    client.legBotMessage.author.send({ embeds: [help]});
 }
 
 showCredits = function() {
-    var credits = new Discord.MessageEmbed()
+    var credits = new MessageEmbed()
         .setColor("#03A9F4")
         .setTitle("LegBot")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
@@ -207,7 +259,7 @@ showCredits = function() {
         .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
         .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
     log("credits,"+package.version);
-    client.legBotMessage.author.send(credits);
+    client.legBotMessage.author.send({ embeds: [credits]});
 }
 
 getPartsInfos = async function(partNo, retry) {
@@ -264,7 +316,7 @@ getPartsInfos = async function(partNo, retry) {
 			color = "#F2CD37";
 		}
 
-		const partsInfo = new Discord.MessageEmbed()
+		const partsInfo = new MessageEmbed()
 			.setColor(color)
 			.setTitle(part.name)
 			.setURL(part.part_url)
@@ -280,7 +332,7 @@ getPartsInfos = async function(partNo, retry) {
 			.addField('Shop : ', "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", true)
 			.setFooter('Source : '+ part.part_url);
 
-		client.legBotMessage.channel.send(partsInfo);
+		client.legBotMessage.channel.send({ embeds: [partsInfo]});
 		log("part," + partNo);
 	} else if (part){
 		if (!retry) {
@@ -329,14 +381,14 @@ String.prototype.toHHMMSS = function () {
     return time;
 }
 
-askBrickset = async function(endpoint, what) {
+askBrickset = async function(endpoint, param, args) {
 	var baseUrl = 'https://brickset.com/api/v3.asmx/';
 	var url = baseUrl+endpoint;
 
 	var params = new URLSearchParams();
 	params.append('apiKey', config.bricksetApiKey);
 	params.append('userhash', '');
-	params.append('params', what);
+	params.append(param, args);
 
 	var data = await fetch(url, {method: "POST", body: params}).then(
 		response => response.json(),
@@ -360,7 +412,7 @@ formatPrice = function(set) {
 		return "No price data available."
 	}
 	message = "Priced **"+sign+ price+"**";
-	// Different API, no more inflation adjusted prince :(
+	// Different API, no more inflation adjusted price :(
     // if (set.retail_price_usd !== set.retail_price_usd_inflation_adjusted) {
     //     message += " ( $"+ set.retail_price_usd_inflation_adjusted+" with inflation)";
     // }

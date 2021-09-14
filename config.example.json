@@ -8,6 +8,7 @@
 		"logfile": "log.txt",
 		"debug": false
 	},
+	"maximumSearchResults": 10,
 	"randomSetURL": "http://mywebsite.com/random-set.php",
 	"moreFunctions": ["/absolute/path/to/example.js", "./custom/mixelJoint.js"]
 }

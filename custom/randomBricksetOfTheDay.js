@@ -6,7 +6,7 @@ Check this Gist for the php script that allows that :
 https://gist.github.com/ThibautPlg/6ac975566323157f802c91c7cb77993b
 */
 
-client.on('message', message => {
+client.on('messageCreate', message => {
     if (message.content.substring(0, 1) == config.trigger) {
         var args = message.content.substring(1).split(' ');
         var cmd = args[0];

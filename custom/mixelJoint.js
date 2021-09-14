@@ -1,7 +1,7 @@
 /*************** New command example ************************
 You'll be able to add custom commands following this example */
 
-client.on('message', message => {
+client.on('messageCreate', message => {
     if (message.content.substring(0, 1) == config.trigger) {
         var args = message.content.substring(1).split(' ');
         var cmd = args[0];
@@ -59,7 +59,7 @@ getMixelJoints = function() {
 		}
 	]
 
-	const mixelMessage = new Discord.MessageEmbed()
+	const mixelMessage = new MessageEmbed()
 		.setColor("#673AB7")
 		.setTitle("Mixel Joints");
 
@@ -71,6 +71,6 @@ getMixelJoints = function() {
 			)
 		}
 
-	client.legBotMessage.channel.send(mixelMessage);
+	client.legBotMessage.channel.send({ embeds: [mixelMessage]});
 	log("mixelJoint");
 }

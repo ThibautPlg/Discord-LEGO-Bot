@@ -1,7 +1,7 @@
 /*************** New command example ************************
 You'll be able to add custom commands following this example */
 
-client.on('message', message => {
+client.on('messageCreate', message => {
     if (message.content.substring(0, 1) == config.trigger) {
         var args = message.content.substring(1).split(' ');
         var cmd = args[0];

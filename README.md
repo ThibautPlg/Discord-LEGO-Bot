@@ -80,6 +80,10 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.5.1
+  - Various bug fixes.
+  - You can now delete a bot message by adding the 🗑️ (`:wastebasket:`) emoji as a react in the 60 seconds following the post.
+  - Experimental pieces search feature. Set the query between double-quotes like `!part "Mahiki Metru"`.
 - 1.5
   - Adding the `instructions` section to a set query. Thanks @"Commander Purple" on top.gg for the idea !
   - Adding the AGPL licence.

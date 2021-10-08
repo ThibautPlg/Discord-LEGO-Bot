@@ -1,5 +1,13 @@
 const { Client, Intents, MessageEmbed, Permissions } = require('discord.js');
-const client = new Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.DIRECT_MESSAGES] });
+const client = new Client({
+	partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
+	intents: [
+		Intents.FLAGS.GUILDS,
+		Intents.FLAGS.GUILD_MESSAGES,
+		Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+		Intents.FLAGS.DIRECT_MESSAGES,
+		Intents.FLAGS.DIRECT_MESSAGE_REACTIONS]
+});
 const config = require('./config.json');
 const package = require('./package.json');
 const fs = require('fs');
@@ -96,11 +104,13 @@ getReview = async function(set) {
 		.setFooter('Source : BrickInsignt');
 
 		log("review," + set);
+
+		channel.send({ embeds: [message]})
+			.then(function(message) { enableDeleteOption(message)});
     } else if (review){
 		log("review-not-found," + set);
-		message = "There is no reviews available on Brickinsights.com for the set "+set
+		channel.send("There is no review available on Brickinsights.com for the set "+set);
 	}
-	channel.send({ embeds: [message]});
 }
 
 getSetInfos = async function(setNumber) {
@@ -167,7 +177,8 @@ getSetInfos = async function(setNumber) {
 		setCard.setFooter('Source : Brickset');
 
         log("set," + setNumber);
-        channel.send({ embeds: [setCard]});
+        channel.send({ embeds: [setCard]})
+			.then(function(message) { enableDeleteOption(message)});
     }
 }
 
@@ -219,7 +230,8 @@ showStats = function() {
         .addField('Total channels', String((client.channels.cache).size), true)
         .addField('Total users', String((client.users.cache).size), true);
     log("stats,"+package.version);
-    client.legBotMessage.author.send({ embeds: [stats]});
+	client.legBotMessage.channel.send({ embeds: [stats]})
+		.then(function(message) { enableDeleteOption(message)});
 }
 
 showHelp = function() {
@@ -239,7 +251,8 @@ showHelp = function() {
         "`"+t+"inviteLegBot` to get a link to invite LegBot to your server. \n \n"+
         "`"+t+"credits`  to show dev credits");
     log("help,"+package.version);
-    client.legBotMessage.author.send({ embeds: [help]});
+	client.legBotMessage.channel.send({ embeds: [help]})
+		.then(function(message) { enableDeleteOption(message)});
 }
 
 showCredits = function() {
@@ -259,7 +272,8 @@ showCredits = function() {
         .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
         .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
     log("credits,"+package.version);
-    client.legBotMessage.author.send({ embeds: [credits]});
+	client.legBotMessage.channel.send({ embeds: [credits]})
+		.then(function(message) { enableDeleteOption(message)});
 }
 
 getPartsInfos = async function(partNo, retry) {
@@ -267,17 +281,27 @@ getPartsInfos = async function(partNo, retry) {
 	if (!argumentIsValid(partNo, "part-no-id,")) {
 		return;
 	}
+	partNo = cleanArgument(partNo);
 	var key = "key="+config.rebrickableToken;
 	var color = "";
 
     //can be a BL or Rebrickable id
-    var part = 'https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&inc_part_details=1&"+key; //2436b
+    var partQuery = 'https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&inc_part_details=1&"+key; //2436b
 
 	if(!!retry) {
-		part = 'https://rebrickable.com/api/v3/lego/parts/?search='+partNo+"&inc_part_details=1&"+key; //35164 is 42022
+		// It may be a full string, let's use the search API
+		// beta
+		var fullCommand = client.legBotMessage.content.substring(client.legBotMessage.content.indexOf(config.trigger)+1, client.legBotMessage.content.length);
+		var computedCommand = fullCommand.match(/^part "(.*)"/);
+		if(!!computedCommand && !!computedCommand[1]) {
+			toSearch = computedCommand[1];
+		} else {
+			toSearch = partNo;
+		}
+		partQuery = 'https://rebrickable.com/api/v3/lego/parts/?search='+toSearch+"&inc_part_details=1&"+key; //35164 is 42022
 	}
 
-	var part = await fetch(part).then(
+	var partFetch = await fetch(partQuery).then(
 		response => response.json(),
 		err => {
 			client.legBotMessage.channel.send("It looks like Rebrickable is down, I can't get my data ! 😐");
@@ -286,9 +310,9 @@ getPartsInfos = async function(partNo, retry) {
 		}
 	);
 
-	if (part && part.count >= 1) {
+	if (partFetch && partFetch.count >= 1) {
 
-		part = part.results[0];
+		part = partFetch.results[0];
 
 		var rebrickableNo = part.part_num; //10201
 		var productionState = '';
@@ -332,9 +356,10 @@ getPartsInfos = async function(partNo, retry) {
 			.addField('Shop : ', "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", true)
 			.setFooter('Source : '+ part.part_url);
 
-		client.legBotMessage.channel.send({ embeds: [partsInfo]});
+		client.legBotMessage.channel.send({ embeds: [partsInfo]})
+			.then(function(message) {enableDeleteOption(message)});
 		log("part," + partNo);
-	} else if (part){
+	} else if (partFetch){
 		if (!retry) {
 			/* First time we failed, let's try to use the "search" feature of Rebrickable ! */
 			getPartsInfos(partNo, true);
@@ -366,7 +391,19 @@ var getSimilarParts = function(part) {
     return txt;
 }
 
-/*************************   Stuff used by function      ****************************/
+enableDeleteOption = function(message) {
+	const filter = (reaction, user) => { return user.id !== message.author.id; }
+
+	const collector = message.createReactionCollector({ filter, time: 60000 });
+
+	collector.on("collect", (reaction, user) => {
+		if (reaction.emoji.name === '🗑️' && !!message) {
+			message.delete();
+		}
+	});
+}
+
+/*************************   Stuff used by functions      ****************************/
 
 String.prototype.toHHMMSS = function () {
     var sec_num = parseInt(this, 10); // don't forget the second param
@@ -420,6 +457,11 @@ formatPrice = function(set) {
 	var ppp = (price/set.pieces).toFixed(2);
     message += "Price per Piece ratio : **"+sign+ ppp +"**\n"
     return message;
+}
+
+/* Clean the given string by removing every weird signs if needed */
+cleanArgument = function(arg) {
+	return arg.replace(/[!"#$%&'()*+,./:;<=>?@[\]^`{|}~]/, '');
 }
 
 /* Is my arg something valid ?

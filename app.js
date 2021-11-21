@@ -41,7 +41,7 @@ client.on('messageCreate', postedMessage => {
                 getPartsInfos(args);
             break;
             case 'bl':
-                postedMessage.channel.send('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args);
+                postedMessage.channel.send(encodeURI('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args));
                 log("bl," + args);
             break;
             case 'bi':
@@ -49,7 +49,7 @@ client.on('messageCreate', postedMessage => {
                 getReview(args);
             break;
             case "bs":
-                postedMessage.channel.send('https://brickset.com/sets/'+parseSetID(args));
+                postedMessage.channel.send(encodeURI('https://brickset.com/sets/'+parseSetID(args)));
                 log("bs," + args);
             break;
             case "LegBot":
@@ -88,7 +88,7 @@ getReview = async function(set) {
 		response => response.json(),
 		err => {
 			log("review-db-error," + set);
-			channel.send("It looks like Brickinsights is down, I can't get my data ! 😐");
+			channel.send("It looks like Brickinsights is down, I can't get my data! 😐");
 		}
 	);
 
@@ -120,8 +120,8 @@ getSetInfos = async function(setNumber) {
 		return;
 	}
 
-	var BInsight = 'https://brickinsights.com/sets/'+ parseSetID(setNumber);
-    var BLlink = "https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber;
+	var BInsight = encodeURI('https://brickinsights.com/sets/'+ parseSetID(setNumber));
+    var BLlink = encodeURI("https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber);
 
 	var set = await askBrickset("getSets", "params", "{'setNumber':'"+parseSetID(setNumber)+"'}");
 
@@ -168,7 +168,7 @@ getSetInfos = async function(setNumber) {
 				const booklet = instructions.instructions[i];
 				if(i < 5) {
 					// Do not show more than 5 links !
-					instructionsList += "["+(i+1)+"]("+booklet.URL+")  ";
+					instructionsList += "["+(i+1)+"]("+encodeURI(booklet.URL)+")  ";
 				}
 			}
 			setCard.addField('Instructions', instructionsList);
@@ -178,7 +178,10 @@ getSetInfos = async function(setNumber) {
 
         log("set," + setNumber);
         channel.send({ embeds: [setCard]})
-			.then(function(message) { enableDeleteOption(message)});
+			.then(function(message) {
+				enableDeleteOption(message),
+				enableImageEnlargeOption(message, thumbnail)
+			});
     }
 }
 
@@ -186,7 +189,7 @@ getSetInfos = async function(setNumber) {
 searchBrickset = async function(query) {
 	var channel = client.legBotMessage.channel;
 
-	var sets = await askBrickset("getSets", "params", "{'query':'"+query+"'}");
+	var sets = await askBrickset("getSets", "params", "{'query':'"+query+"', 'orderBy':'Rating'}");
 
 	var matches = sets.matches;
 	var apiFinds = sets.sets;
@@ -195,7 +198,7 @@ searchBrickset = async function(query) {
 	if(matches && matches > 1) {
 		var answer = new MessageEmbed()
 			.setColor('#F2CD37')
-			.setTitle(matches + ' results found !')
+			.setTitle(matches + ' results found!')
 			.setThumbnail(apiFinds[0].image.imageURL)
 
 		apiFinds.forEach(set => {
@@ -203,7 +206,9 @@ searchBrickset = async function(query) {
 			.addField(set.number, "["+set.name+"]("+set.bricksetURL+") ("+set.year+")");
 		});
 
-		answer.setFooter('Use `!set {set number}` to see more !');
+		answer.addField(":notebook_with_decorative_cover: Brickset search results", encodeURI("https://brickset.com/sets?query="+query));
+
+		answer.setFooter('Use `!set {set number}` to see more!');
 		channel.send({ embeds: [answer]});
 		log("search,"+query);
 	} else if(matches === 1) {
@@ -240,16 +245,21 @@ showHelp = function() {
         .setColor("#009688")
         .setTitle("LegBot help")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
-        .addField('Hey !', "Thanks for using this LEGO bot ! :kissing_smiling_eyes: \n To use me, type the following commands :")
-        .addField('Commands : ', "`"+t+"# or "+t+"set [SET NUMBER]`  to have general usefull infos about the set number.\n"+
+        .addField('Hey!', "Thanks for using this LEGO bot! :kissing_smiling_eyes: \n To use me, type the following commands :")
+        .addField('Commands : ', "`"+t+"set [SET NUMBER]`  to have general informations about a set.\n"+
+		"`"+t+"search [QUERY]` to search a set by name. {beta}\n"+
         "`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id).\n"+
         "`"+t+"mixeljoint`  to have the list of the most used mixeljoint (with an awesome drawing of each).\n"+
         "`"+t+"bs [SET NUMBER]`  to show a link to Brickset about the provided set number \n"+
         "`"+t+"bl [SET NUMBER]`  to show a BrickLink link to the searched set number \n"+
         "`"+t+"review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"+
         "`"+t+"help`  to display this message... Not that useful if you're reading this tho. \n "+
-        "`"+t+"inviteLegBot` to get a link to invite LegBot to your server. \n \n"+
-        "`"+t+"credits`  to show dev credits");
+        "`"+t+"inviteLegBot` to get a link to invite LegBot to your server. \n"+
+        "`"+t+"credits`  to show dev credits. \n \n")
+		.addField("Reactions :",
+		"You can add a \"🗑️\" reaction to most of the bot messages within a minute to remove them. \n"+
+		"You can add a \"🔎\", \"🔍\" or \"🖼️\" reaction on the set or part command to have a bigger image.");
+
     log("help,"+package.version);
 	client.legBotMessage.channel.send({ embeds: [help]})
 		.then(function(message) { enableDeleteOption(message)});
@@ -286,7 +296,7 @@ getPartsInfos = async function(partNo, retry) {
 	var color = "";
 
     //can be a BL or Rebrickable id
-    var partQuery = 'https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+partNo+"&inc_part_details=1&"+key; //2436b
+    var partQuery = 'https://rebrickable.com/api/v3/lego/parts/?bricklink_id='+encodeURI(partNo)+"&inc_part_details=1&"+key; //2436b
 
 	if(!!retry) {
 		// It may be a full string, let's use the search API
@@ -298,13 +308,13 @@ getPartsInfos = async function(partNo, retry) {
 		} else {
 			toSearch = partNo;
 		}
-		partQuery = 'https://rebrickable.com/api/v3/lego/parts/?search='+toSearch+"&inc_part_details=1&"+key; //35164 is 42022
+		partQuery = 'https://rebrickable.com/api/v3/lego/parts/?search='+encodeURI(toSearch)+"&inc_part_details=1&"+key; //35164 is 42022
 	}
 
 	var partFetch = await fetch(partQuery).then(
 		response => response.json(),
 		err => {
-			client.legBotMessage.channel.send("It looks like Rebrickable is down, I can't get my data ! 😐");
+			client.legBotMessage.channel.send("It looks like Rebrickable is down, I can't get my data! 😐");
 			client.legBotMessage.react('😐')
 			log("part-db-error," + partNo);
 		}
@@ -318,23 +328,26 @@ getPartsInfos = async function(partNo, retry) {
 		var productionState = '';
 
 		var bricklinkId = part.external_ids.BrickLink;
-		var bricklinkUrl = 'https://www.bricklink.com/v2/search.page?q='+rebrickableNo;
+		var bricklinkUrl = 'https://www.bricklink.com/v2/search.page?q='+ encodeURI(rebrickableNo);
 		if (bricklinkId) {
-		bricklinkUrl = "https://www.bricklink.com/v2/catalog/catalogitem.page?P="+ bricklinkId
+		bricklinkUrl = "https://www.bricklink.com/v2/catalog/catalogitem.page?P="+ encodeURI(bricklinkId)
 		}
 		var brickOwlId = part.external_ids.BrickOwl;
-		var brickOwlUrl = 'https://www.brickowl.com/search/catalog?query=266404'+rebrickableNo;
+		var brickOwlUrl = 'https://www.brickowl.com/search/catalog?query='+encodeURI(rebrickableNo);
 		if (brickOwlId) {
-			brickOwlUrl = "https://www.brickowl.com/search/catalog?query=266404"+ brickOwlId
+			brickOwlUrl = "https://www.brickowl.com/search/catalog?query="+ encodeURI(brickOwlId)
 		}
 		var legoId = part.external_ids.LEGO ? part.external_ids.LEGO : rebrickableNo;
-		var legoUrl = 'https://www.lego.com/fr-fr/page/static/pick-a-brick?query='+legoId;
+		var legoUrl = 'https://www.lego.com/fr-fr/page/static/pick-a-brick?query='+encodeURI(legoId);
 
 
-		if(new Date().getFullYear() <= part.year_to) {
+		if(new Date().getFullYear() < part.year_to) {
 			// Still in production ?
-			productionState = "[:green_circle: Still in production !] \n";
+			productionState = "[:green_circle: Still in production] \n";
 			color = "#8BC34A";
+		} else if(new Date().getFullYear() == part.year_to) {
+			productionState = "[:new:  New part] \n";
+			color = "#0D47A1";
 		} else {
 			productionState = "[:orange_circle:  No more produced] \n";
 			color = "#F2CD37";
@@ -357,14 +370,17 @@ getPartsInfos = async function(partNo, retry) {
 			.setFooter('Source : '+ part.part_url);
 
 		client.legBotMessage.channel.send({ embeds: [partsInfo]})
-			.then(function(message) {enableDeleteOption(message)});
+			.then(function(message) {
+				enableDeleteOption(message),
+				enableImageEnlargeOption(message, part.part_img_url)
+			});
 		log("part," + partNo);
 	} else if (partFetch){
 		if (!retry) {
 			/* First time we failed, let's try to use the "search" feature of Rebrickable ! */
 			getPartsInfos(partNo, true);
 		} else {
-			client.legBotMessage.channel.send("I'm so sorry **"+ client.legBotMessage.author.username +"**, I didn't find the part you were looking for. :(");
+			client.legBotMessage.channel.send("I'm so sorry **"+ client.legBotMessage.author.username +"**, I could not find the part you were looking for. :(");
 			client.legBotMessage.react('🙄')
 			log("part-not-found," + partNo);
 		}
@@ -403,6 +419,19 @@ enableDeleteOption = function(message) {
 	});
 }
 
+enableImageEnlargeOption = function(message, imageURL) {
+	const filter = (reaction, user) => { return user.id !== message.author.id; }
+
+	const collector = message.createReactionCollector({ filter, time: 120000 });
+
+	const reactions = ['🔎', '🔍', '🖼️'];
+
+	collector.on("collect", (reaction, user) => {
+		if (!!message && !!imageURL && (reactions.indexOf(reaction.emoji.name) != -1)) {
+			client.legBotMessage.channel.send(imageURL);
+		}
+	});
+}
 /*************************   Stuff used by functions      ****************************/
 
 String.prototype.toHHMMSS = function () {

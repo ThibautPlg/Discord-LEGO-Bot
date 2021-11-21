@@ -27,7 +27,7 @@ Thanks you everyone !
 <hr>
 
 ## Commands :
-- `!# or !set [SET NUMBER]` to have general usefull infos about a specific set
+- `!set [SET NUMBER]` to have general usefull infos about a specific set
 <p align="center">
 	<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/set-example.png" alt="Parts Example">
 
@@ -80,6 +80,12 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.5.2
+  - Various improvements.
+  - You can now add a 🔎,🔍 or 🖼️ reaction within 120 seconds to ask the bot to post a bigger picture of a set or a part.
+  - Adding a direct link to the Brickset search page at the end of the `!search` results.
+  - New parts are now distinguished from "in production" and "no more produced".
+  - Fixing an issue where the instructions links were broken.
 - 1.5.1
   - Various bug fixes.
   - You can now delete a bot message by adding the 🗑️ (`:wastebasket:`) emoji as a react in the 60 seconds following the post.

@@ -341,13 +341,13 @@ getPartsInfos = async function(partNo, retry) {
 		var legoUrl = 'https://www.lego.com/fr-fr/page/static/pick-a-brick?query='+encodeURI(legoId);
 
 		var currentYear = new Date().getFullYear();
-		if(currentYear < part.year_to) {
+		if(currentYear == part.year_from && currentYear == part.year_to) {
+			productionState = "[:new:  New part] \n";
+			color = "#0D47A1";
+		} else if(currentYear <= part.year_to) {
 			// Still in production ?
 			productionState = "[:green_circle: Still in production] \n";
 			color = "#8BC34A";
-		} else if(currentYear == part.year_from && currentYear == part.year_to) {
-			productionState = "[:new:  New part] \n";
-			color = "#0D47A1";
 		} else {
 			productionState = "[:orange_circle:  No more produced] \n";
 			color = "#F2CD37";

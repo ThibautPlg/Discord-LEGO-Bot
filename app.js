@@ -340,12 +340,12 @@ getPartsInfos = async function(partNo, retry) {
 		var legoId = part.external_ids.LEGO ? part.external_ids.LEGO : rebrickableNo;
 		var legoUrl = 'https://www.lego.com/fr-fr/page/static/pick-a-brick?query='+encodeURI(legoId);
 
-
-		if(new Date().getFullYear() < part.year_to) {
+		var currentYear = new Date().getFullYear();
+		if(currentYear < part.year_to) {
 			// Still in production ?
 			productionState = "[:green_circle: Still in production] \n";
 			color = "#8BC34A";
-		} else if(new Date().getFullYear() == part.year_to) {
+		} else if(currentYear == part.year_from && currentYear == part.year_to) {
 			productionState = "[:new:  New part] \n";
 			color = "#0D47A1";
 		} else {

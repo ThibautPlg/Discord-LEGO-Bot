@@ -74,5 +74,5 @@ getMixelJoints = function() {
 
 	client.legBotMessage.channel.send({ embeds: [mixelMessage]})
 		.then(function(message) {enableDeleteOption(message)});
-	log("mixelJoint");
+	log("mixelJoint,0");
 }

@@ -22,7 +22,7 @@ client.on('messageCreate', message => {
 
 getRandomSetOfTheDay = function() {
 
-	log("randomSetOfTheDay");
+	log("randomSetOfTheDay,0");
 
 	if (config && config.randomSetURL) {
 

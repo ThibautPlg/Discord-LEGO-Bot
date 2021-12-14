@@ -27,7 +27,7 @@ Thanks you everyone !
 <hr>
 
 ## Commands :
-- `!set [SET NUMBER]` to have general usefull infos about a specific set
+- `!set [SET NUMBER]` to have general useful infos about a specific set
 <p align="center">
 	<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/set-example.png" alt="Parts Example">
 
@@ -80,6 +80,11 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Changelog
 
+- 1.5.3
+  - The "bigger picture" reaction can now itself have a 🗑️ (`:wastebasket:`) reaction to delete the enlarged picture.
+  - Extended the 🗑️ (`:wastebasket:`) reaction listener from 60 to 120 seconds.
+  - Prices and PPP now contains UK and DE prices.
+  - Fixing the date output for a part released during a single year (no more "from 2002 to 2002")
 - 1.5.2
   - Various improvements.
   - You can now add a 🔎,🔍 or 🖼️ reaction within 120 seconds to ask the bot to post a bigger picture of a set or a part.

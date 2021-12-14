@@ -353,13 +353,17 @@ getPartsInfos = async function(partNo, retry) {
 			color = "#F2CD37";
 		}
 
+		var releaseString = "Released in "+ part.year_from;
+		if (part.year_from !== part.year_to) {
+			releaseString += ", at least produced until "+ part.year_to;
+		}
+
 		const partsInfo = new MessageEmbed()
 			.setColor(color)
 			.setTitle(part.name)
 			.setURL(part.part_url)
 			.setThumbnail(part.part_img_url)
-			.addField('General', productionState + part.name +"\n \
-				Released in "+ part.year_from + ", at least produced until "+ part.year_to);
+			.addField('General', productionState + part.name +"\n "+releaseString);
 
 			if(part.molds && part.molds.length) {
 				partsInfo.addField("Similar to", getSimilarParts(part));
@@ -410,7 +414,7 @@ var getSimilarParts = function(part) {
 enableDeleteOption = function(message) {
 	const filter = (reaction, user) => { return user.id !== message.author.id; }
 
-	const collector = message.createReactionCollector({ filter, time: 60000 });
+	const collector = message.createReactionCollector({ filter, time: 120000 });
 
 	collector.on("collect", (reaction, user) => {
 		if (reaction.emoji.name === '🗑️' && !!message) {
@@ -428,7 +432,8 @@ enableImageEnlargeOption = function(message, imageURL) {
 
 	collector.on("collect", (reaction, user) => {
 		if (!!message && !!imageURL && (reactions.indexOf(reaction.emoji.name) != -1)) {
-			client.legBotMessage.channel.send(imageURL);
+			client.legBotMessage.channel.send(imageURL)
+			.then(function(message) { enableDeleteOption(message)});
 		}
 	});
 }
@@ -466,26 +471,56 @@ askBrickset = async function(endpoint, param, args) {
 }
 
 formatPrice = function(set) {
-	let sign = '';
-	let price = '';
+	let prices = [];
 	if (set.LEGOCom && set.LEGOCom.US && set.LEGOCom.US.retailPrice) {
-		sign = '$';
-		price = set.LEGOCom.US.retailPrice
-	} else if (set.LEGOCom && set.LEGOCom.UK && set.LEGOCom.UK.retailPrice) {
-		sign = '£';
-		price = set.LEGOCom.UK.retailPrice
+		prices.push({
+			sign: '$',
+			price: set.LEGOCom.US.retailPrice,
+			priceString: '$'+set.LEGOCom.US.retailPrice,
+			ppp: (set.LEGOCom.US.retailPrice/set.pieces).toFixed(2),
+			pppString: '$'+(set.LEGOCom.US.retailPrice/set.pieces).toFixed(2)
+		});
+	}
+	if (set.LEGOCom && set.LEGOCom.UK && set.LEGOCom.UK.retailPrice) {
+		prices.push({
+			sign: '£',
+			price: set.LEGOCom.UK.retailPrice,
+			priceString: '£'+set.LEGOCom.UK.retailPrice,
+			ppp: (set.LEGOCom.UK.retailPrice/set.pieces).toFixed(2),
+			pppString: '£'+(set.LEGOCom.UK.retailPrice/set.pieces).toFixed(2)
+		});
+	}
+	if (set.LEGOCom && set.LEGOCom.DE && set.LEGOCom.DE.retailPrice) {
+		prices.push({
+			sign: '€',
+			price: set.LEGOCom.DE.retailPrice,
+			priceString: set.LEGOCom.DE.retailPrice+"€",
+			ppp: (set.LEGOCom.DE.retailPrice/set.pieces).toFixed(2),
+			pppString: (set.LEGOCom.DE.retailPrice/set.pieces).toFixed(2)+'€'
+		});
+	}
+
+	if (prices.length) {
+		let message = 'Priced **';
+		let ppp = "Price per Piece ratio : **";
+		for (const index in prices) {
+			if (Object.hasOwnProperty.call(prices, index)) {
+				let price = prices[index];
+				var separator = " ";
+				if (index < prices.length-1) {
+					separator = '** / **';
+				}
+				message += price.priceString + separator;
+				ppp += price.pppString + separator;
+			}
+		}
+		message += "**";
+		message += "\n";
+		message += ppp+"**\n"
+		return message;
 	} else {
 		return "No price data available."
 	}
-	message = "Priced **"+sign+ price+"**";
-	// Different API, no more inflation adjusted price :(
-    // if (set.retail_price_usd !== set.retail_price_usd_inflation_adjusted) {
-    //     message += " ( $"+ set.retail_price_usd_inflation_adjusted+" with inflation)";
-    // }
-	message += "\n";
-	var ppp = (price/set.pieces).toFixed(2);
-    message += "Price per Piece ratio : **"+sign+ ppp +"**\n"
-    return message;
 }
 
 /* Clean the given string by removing every weird signs if needed */

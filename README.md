@@ -93,8 +93,7 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 ## Sponsorship
 Giving a tip through Liberapay or Coindrop will help me paying the monthly bill of the bot hosting. (About $7 a month). Surplus will go to Brickset and Rebrickable as Legbot would not be the same without them.
-<script src="https://liberapay.com/Thibautplg/widgets/button.js"></script>
-<noscript><a href="https://liberapay.com/Thibautplg/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a></noscript>
+<a href="https://liberapay.com/Thibautplg/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a>
 
 ## Support and contact
 [Twitter](https://twitter.com/thibaut_plg)

@@ -27,25 +27,41 @@ Thanks you everyone !
 <hr>
 
 ## Commands :
+[All commands are listed on Legbot's website.](https://thibautplg.github.io/legbot/)
+
 - `!set [SET NUMBER]` to have general useful infos about a specific set
 <p align="center">
-	<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/set-example.png" alt="Parts Example">
+	<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/set-example.bmp" alt="Parts Example">
 
 </p>
 
 
 - `!part [PART ID]` to have informations about a piece (Bricklink id).
 <p align="center">
-	<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/part-example.png" alt="Parts Example"> <br> Green for pieces still produced, orange otherwise
+	<img width="460" src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/part-example.bmp" alt="Parts Example"> <br> Green for pieces still produced, orange otherwise
 </p>
 
-- `!bs [SET NUMBER]`  to show a link to Brickset about the provided set number
-- `!bl [SET NUMBER]`  to show a BrickLink link to the searched set number
-- `!review [SET NUMBER]`  to have infos about the requested set (rating, reviews...)
-- `!help`  to display this message... Not that useful if you're reading this tho
-- `!inviteLegBot`  to get an invitation link
-- `!credits`  to show dev credits
+- `!search [query]` Search for a set by name (Beta feature, may be surprisingly wrong)
+- `!part " search terms "` Search for a part name (Beta, not usabe in the middle of a sentence)
+- `!mixeljoint` Show a list of the most used mixeljoint (with an awesome drawing of each)
+- `!bs [SET NUMBER]` Get a direct link to the Brickset page of the set
+- `!bl [SET NUMBER]` Get a direct link to the Bricklink page of the set
+- `!review [SET NUMBER]` Get the set score based on the BrickInsights review
+- `!help` Show all the bot commands
+- `!inviteLegBot` Get a link to invite LegBot to your server
+- `!credits` Display the bot credits
 
+### Interactions
+
+On most of Legbot's messages you can add reactions to have specific behaviour.
+
+#### 🔎,🔍 or 🖼️ within 120 seconds
+`:mag_right: :mag: :frame:`  
+Will post a bigger picture of the set/part. (Useful on mobile where you can't click the thumbnail !)
+
+#### 🗑️ within 120 seconds
+`:wastebasket:`  
+Will delete the message. Works on the pictures posted by the 🔎,🔍 or 🖼️ interactions.
 
 ## Credits :
 - Rebrickable API : https://rebrickable.com/api/
@@ -75,11 +91,21 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 	<img src="https://github.com/ThibautPlg/Discord-LEGO-Bot/raw/master/readme.assets/invitebutton.png" alt="Invite me !"> </a>
 </p>
 
+## Sponsorship
+Giving a tip through Liberapay or Coindrop will help me paying the monthly bill of the bot hosting. (About $7 a month). Surplus will go to Brickset and Rebrickable as Legbot would not be the same without them.
+<script src="https://liberapay.com/Thibautplg/widgets/button.js"></script>
+<noscript><a href="https://liberapay.com/Thibautplg/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a></noscript>
+
 ## Support and contact
 [Twitter](https://twitter.com/thibaut_plg)
 
 ## Changelog
+Legbot changelog and versions are available on the [release page](https://github.com/ThibautPlg/Discord-LEGO-Bot/releases).
 
+- 1.5.4
+  - Improving the `!part` search using a Levenshtein implementation to find the most relevant results.
+  - Adding the "Print of" section in the part card if the given result is a printed version of a brick.
+  - Adding the "Alternates" section in the part card to show mold variations (like `4081a` / `4081b`)
 - 1.5.3
   - The "bigger picture" reaction can now itself have a 🗑️ (`:wastebasket:`) reaction to delete the enlarged picture.
   - Extended the 🗑️ (`:wastebasket:`) reaction listener from 60 to 120 seconds.

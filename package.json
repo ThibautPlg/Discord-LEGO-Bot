@@ -1,6 +1,6 @@
 {
 	"name": "legbot",
-	"version": "1.5.3",
+	"version": "1.5.4",
 	"homepage": "https://github.com/ThibautPlg/Discord-LEGO-Bot",
 	"repository": {
 		"type": "git",
@@ -12,6 +12,7 @@
 	"dependencies": {
 		"async-limiter": "1.0.1",
 		"discord.js": "^13",
+		"fastest-levenshtein": "^1.0.12",
 		"long": "4.0.0",
 		"node-fetch": "^2.6.2",
 		"prism-media": "0.0.3",

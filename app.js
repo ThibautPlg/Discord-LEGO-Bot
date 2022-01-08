@@ -12,6 +12,7 @@ const config = require('./config.json');
 const package = require('./package.json');
 const fs = require('fs');
 const fetch = require('node-fetch');
+const {distance, closest} = require('fastest-levenshtein');
 const { URLSearchParams } = require('url');
 
 client.once('ready', () => {
@@ -308,7 +309,7 @@ getPartsInfos = async function(partNo, retry) {
 		} else {
 			toSearch = partNo;
 		}
-		partQuery = 'https://rebrickable.com/api/v3/lego/parts/?search='+encodeURI(toSearch)+"&inc_part_details=1&"+key; //35164 is 42022
+		partQuery = 'https://rebrickable.com/api/v3/lego/parts/?search='+encodeURI(toSearch)+"&page_size=20&ordering=part_cat_id&inc_part_details=1&"+key; //35164 is 42022
 	}
 
 	var partFetch = await fetch(partQuery).then(
@@ -322,7 +323,7 @@ getPartsInfos = async function(partNo, retry) {
 
 	if (partFetch && partFetch.count >= 1) {
 
-		part = partFetch.results[0];
+		part = guessMostRelevantPart(toSearch, partFetch.results);
 
 		var rebrickableNo = part.part_num; //10201
 		var productionState = '';
@@ -366,7 +367,13 @@ getPartsInfos = async function(partNo, retry) {
 			.addField('General', productionState + part.name +"\n "+releaseString);
 
 			if(part.molds && part.molds.length) {
-				partsInfo.addField("Similar to", getSimilarParts(part));
+				partsInfo.addField("Similar to", getSimilarParts(part.molds));
+			} else if(part.alternates && part.alternates.length) {
+				partsInfo.addField("See also", getSimilarParts(part.alternates));
+			}
+
+			if(part.print_of && part.print_of.length) {
+				partsInfo.addField("Print of", "["+part.print_of+"](https://rebrickable.com/parts/"+part.print_of+")" );
 			}
 
 			partsInfo
@@ -391,8 +398,7 @@ getPartsInfos = async function(partNo, retry) {
 	}
 }
 
-var getSimilarParts = function(part) {
-    var molds = part.molds;
+var getSimilarParts = function(molds) {
     var txt = '';
     if (molds) {
         var total = molds.length;
@@ -409,6 +415,60 @@ var getSimilarParts = function(part) {
 
     }
     return txt;
+}
+
+/**	Guessing the best part to return to the user.
+ * Example with !part 65765
+ */
+guessMostRelevantPart = function(query, partList) {
+	// The search got a single result, no need to search for best match
+	if (partList.length == 1) {
+		return partList[0];
+	}
+
+	/* Critical values are compared to the query string with the Levenshtein distance algorithm.
+	The lower, the better. */
+	var comptedWeights = [];
+	for (var i = 0; i < partList.length; i++) {
+		let part = partList[i];
+		let external_ids = part.external_ids;
+
+		/* Initial weight is based on the part_num */
+		let weight = distance(part.part_num, query);
+
+		/* Weight increases if bricklink ID is different */
+		if (external_ids && external_ids.BrickLink) {
+			let subWeight = [];
+			external_ids.BrickLink.forEach(bricklinkId => {
+				subWeight.push({
+					"weight": distance(query, bricklinkId),
+					"id": bricklinkId
+				});
+			});
+			weight = +Math.min.apply(null, subWeight.map(function(o) { return o.weight; }));
+		}
+
+		/* Weight increases if brickset ID is different */
+		if (external_ids && external_ids.Brickset) {
+			let subWeight = [];
+			external_ids.Brickset.forEach(bricksetId => {
+				subWeight.push({
+					"weight": distance(query, bricksetId),
+					"id": bricksetId
+				});
+			});
+			weight = +Math.min.apply(null, subWeight.map(function(o) { return o.weight; }));
+		}
+
+		comptedWeights.push({
+			"weight": weight,
+			"id": i
+		});
+	}
+	// Ordering in ascending order to have lower first
+	comptedWeights.sort((a, b) => parseFloat(a.weight) - parseFloat(b.weight));
+
+	return partList[comptedWeights[0].id];
 }
 
 enableDeleteOption = function(message) {

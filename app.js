@@ -293,6 +293,7 @@ getPartsInfos = async function(partNo, retry) {
 		return;
 	}
 	partNo = cleanArgument(partNo);
+	toSearch = partNo;
 	var key = "key="+config.rebrickableToken;
 	var color = "";
 
@@ -306,8 +307,6 @@ getPartsInfos = async function(partNo, retry) {
 		var computedCommand = fullCommand.match(/^part "(.*)"/);
 		if(!!computedCommand && !!computedCommand[1]) {
 			toSearch = computedCommand[1];
-		} else {
-			toSearch = partNo;
 		}
 		partQuery = 'https://rebrickable.com/api/v3/lego/parts/?search='+encodeURI(toSearch)+"&page_size=20&ordering=part_cat_id&inc_part_details=1&"+key; //35164 is 42022
 	}

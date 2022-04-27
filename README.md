@@ -55,11 +55,11 @@ Thanks you everyone !
 
 On most of Legbot's messages you can add reactions to have specific behaviour.
 
-#### 🔎,🔍 or 🖼️ within 120 seconds
+#### 🔎,🔍 or 🖼️ within 240 seconds
 `:mag_right: :mag: :frame:`  
 Will post a bigger picture of the set/part. (Useful on mobile where you can't click the thumbnail !)
 
-#### 🗑️ within 120 seconds
+#### 🗑️ within 240 seconds
 `:wastebasket:`  
 Will delete the message. Works on the pictures posted by the 🔎,🔍 or 🖼️ interactions.
 

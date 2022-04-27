@@ -82,6 +82,7 @@ getReview = async function(set) {
 	if (!argumentIsValid(set, "review-no-id,")) {
 		return;
 	}
+	set = cleanArgument(set);
 
 	var postedMessage = client.legBotMessage;
 
@@ -120,6 +121,7 @@ getSetInfos = async function(setNumber) {
 	if (!argumentIsValid(setNumber, "set-no-id,")) {
 		return;
 	}
+	setNumber = cleanArgument(setNumber);
 
 	var BInsight = encodeURI('https://brickinsights.com/sets/'+ parseSetID(setNumber));
     var BLlink = encodeURI("https://www.bricklink.com/v2/catalog/catalogitem.page?S="+setNumber);
@@ -473,7 +475,7 @@ guessMostRelevantPart = function(query, partList) {
 enableDeleteOption = function(message) {
 	const filter = (reaction, user) => { return user.id !== message.author.id; }
 
-	const collector = message.createReactionCollector({ filter, time: 120000 });
+	const collector = message.createReactionCollector({ filter, time: 240000 });
 
 	collector.on("collect", (reaction, user) => {
 		if (reaction.emoji.name === '🗑️' && !!message) {
@@ -485,7 +487,7 @@ enableDeleteOption = function(message) {
 enableImageEnlargeOption = function(message, imageURL) {
 	const filter = (reaction, user) => { return user.id !== message.author.id; }
 
-	const collector = message.createReactionCollector({ filter, time: 120000 });
+	const collector = message.createReactionCollector({ filter, time: 240000 });
 
 	const reactions = ['🔎', '🔍', '🖼️'];
 

@@ -10,5 +10,6 @@
 	},
 	"maximumSearchResults": 10,
 	"randomSetURL": "http://mywebsite.com/random-set.php",
+	"designerDatabaseURL": "https://mywebsite.com/?query=",
 	"moreFunctions": ["/absolute/path/to/example.js", "./custom/mixelJoint.js"]
 }

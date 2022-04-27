@@ -139,6 +139,7 @@ getSetInfos = async function(setNumber) {
     } else {
 		set = set.sets[0];
 		var instructions = await askBrickset("getInstructions2", "setNumber", set.number);
+		var designers = await fetchDesigners(set.number);
 		let thumbnail = "";
 		if(set.image && set.image.imageURL) {
 			thumbnail = set.image.imageURL;
@@ -175,6 +176,22 @@ getSetInfos = async function(setNumber) {
 				}
 			}
 			setCard.addField('Instructions', instructionsList);
+		}
+		if (designers.length > 0) {
+			let designersList = "";
+			if(designers.length == 1) {
+				title = "Designer";
+			} else {
+				title = "Designers";
+			}
+			for (let i = 0; i < designers.length; i++) {
+				let designer = designers[i];
+				designersList += "["+designer.name+"]("+encodeURI(designer.bricklist)+")  ";
+				if (i < designers.length-1) {
+					designersList +=  '** / **';
+				}
+			}
+			setCard.addField(title, designersList);
 		}
 
 		setCard.setFooter({"text":'Source : Brickset', "iconURL": "https://brickset.com/favicon.ico"});
@@ -471,6 +488,20 @@ guessMostRelevantPart = function(query, partList) {
 
 	return partList[comptedWeights[0].id];
 }
+
+fetchDesigners = async function(setNumber) {
+	if (config && config.designerDatabaseURL) {
+		return await fetch(config.designerDatabaseURL+setNumber).then(
+			response => response.json(),
+			err => {
+				log("designer-error," + setNumber);
+			}
+		);
+	} else {
+		return [];
+	}
+}
+
 
 enableDeleteOption = function(message) {
 	const filter = (reaction, user) => { return user.id !== message.author.id; }

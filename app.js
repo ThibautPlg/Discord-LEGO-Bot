@@ -42,7 +42,7 @@ client.on('messageCreate', postedMessage => {
                 getPartsInfos(args);
             break;
             case 'bl':
-                postedMessage.channel.send(encodeURI('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args));
+                postedMessage.reply(encodeURI('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args));
                 log("bl," + args);
             break;
             case 'bi':
@@ -50,7 +50,7 @@ client.on('messageCreate', postedMessage => {
                 getReview(args);
             break;
             case "bs":
-                postedMessage.channel.send(encodeURI('https://brickset.com/sets/'+parseSetID(args)));
+                postedMessage.reply(encodeURI('https://brickset.com/sets/'+parseSetID(args)));
                 log("bs," + args);
             break;
             case "LegBot":
@@ -83,13 +83,13 @@ getReview = async function(set) {
 		return;
 	}
 
-	var channel = client.legBotMessage.channel;
+	var postedMessage = client.legBotMessage;
 
     var review = await fetch('https://brickinsights.com/api/sets/'+parseSetID(set)).then(
 		response => response.json(),
 		err => {
 			log("review-db-error," + set);
-			channel.send("It looks like Brickinsights is down, I can't get my data! 😐");
+			postedMessage.reply("It looks like Brickinsights is down, I can't get my data! 😐");
 		}
 	);
 
@@ -102,20 +102,20 @@ getReview = async function(set) {
 		.setThumbnail("https://brickinsights.com/storage/sets/"+parseSetID(set)+".jpg")
 		.addField('Rated',review.name +" is rated **"+ rating + "/100**") /*+ ", belongs to the "+ set.primary_category.name +" category")*/
 		.addField('Links', "More reviews at [BrickInsignt]("+review.url+")")
-		.setFooter('Source : BrickInsignt');
+		.setFooter({"text":'Source : BrickInsignt'});
 
 		log("review," + set);
 
-		channel.send({ embeds: [message]})
+		postedMessage.reply({ embeds: [message]})
 			.then(function(message) { enableDeleteOption(message)});
     } else if (review){
 		log("review-not-found," + set);
-		channel.send("There is no review available on Brickinsights.com for the set "+set);
+		postedMessage.reply("There is no review available on Brickinsights.com for the set "+set);
 	}
 }
 
 getSetInfos = async function(setNumber) {
-	var channel = client.legBotMessage.channel;
+	var postedMessage = client.legBotMessage;
 
 	if (!argumentIsValid(setNumber, "set-no-id,")) {
 		return;
@@ -128,11 +128,11 @@ getSetInfos = async function(setNumber) {
 
 	if (set.matches <= 0) {
 		log("set-not-found," + setNumber);
-		channel.send("Set "+setNumber+" not found... ");
+		postedMessage.reply("Set "+setNumber+" not found... ");
 		client.legBotMessage.react('🙄');
 	} else if (set.status && set.status !== "success") {
         log("set-db-error," + setNumber);
-		channel.send("Ooops, something is wrong with my database... ");
+		postedMessage.reply("Ooops, something is wrong with my database... ");
 		client.legBotMessage.react('🙄');
     } else {
 		set = set.sets[0];
@@ -175,10 +175,10 @@ getSetInfos = async function(setNumber) {
 			setCard.addField('Instructions', instructionsList);
 		}
 
-		setCard.setFooter('Source : Brickset');
+		setCard.setFooter({"text":'Source : Brickset', "iconURL": "https://brickset.com/favicon.ico"});
 
         log("set," + setNumber);
-        channel.send({ embeds: [setCard]})
+        postedMessage.reply({ embeds: [setCard]})
 			.then(function(message) {
 				enableDeleteOption(message),
 				enableImageEnlargeOption(message, thumbnail)
@@ -188,7 +188,7 @@ getSetInfos = async function(setNumber) {
 
 /* beta */
 searchBrickset = async function(query) {
-	var channel = client.legBotMessage.channel;
+	var postedMessage = client.legBotMessage;
 
 	var sets = await askBrickset("getSets", "params", "{'query':'"+query+"', 'orderBy':'Rating'}");
 
@@ -209,15 +209,15 @@ searchBrickset = async function(query) {
 
 		answer.addField(":notebook_with_decorative_cover: Brickset search results", encodeURI("https://brickset.com/sets?query="+query));
 
-		answer.setFooter('Use `!set {set number}` to see more!');
-		channel.send({ embeds: [answer]});
+		answer.setFooter({"text": 'Use `!set {set number}` to see more!', "iconURL": "https://thibautplg.github.io/legbot/img/legBot.png"});
+		postedMessage.reply({ embeds: [answer]});
 		log("search,"+query);
 	} else if(matches === 1) {
 		log("search-direct-result,"+query);
 		getSetInfos(String(apiFinds[0].number+"-"+apiFinds[0].numberVariant));
 	} else {
 		log("search-not-found,"+query);
-		client.legBotMessage.channel.send("Nothing found for \""+query+"\".");
+		postedMessage.reply("Nothing found for \""+query+"\".");
 	}
 }
 
@@ -236,7 +236,7 @@ showStats = function() {
         .addField('Total channels', String((client.channels.cache).size), true)
         .addField('Total users', String((client.users.cache).size), true);
     log("stats,"+package.version);
-	client.legBotMessage.channel.send({ embeds: [stats]})
+	client.legBotMessage.reply({ embeds: [stats]})
 		.then(function(message) { enableDeleteOption(message)});
 }
 
@@ -262,7 +262,7 @@ showHelp = function() {
 		"You can add a \"🔎\", \"🔍\" or \"🖼️\" reaction on the set or part command to have a bigger image.");
 
     log("help,"+package.version);
-	client.legBotMessage.channel.send({ embeds: [help]})
+	client.legBotMessage.reply({ embeds: [help]})
 		.then(function(message) { enableDeleteOption(message)});
 }
 
@@ -283,7 +283,7 @@ showCredits = function() {
         .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
         .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
     log("credits,"+package.version);
-	client.legBotMessage.channel.send({ embeds: [credits]})
+	client.legBotMessage.reply({ embeds: [credits]})
 		.then(function(message) { enableDeleteOption(message)});
 }
 
@@ -314,7 +314,7 @@ getPartsInfos = async function(partNo, retry) {
 	var partFetch = await fetch(partQuery).then(
 		response => response.json(),
 		err => {
-			client.legBotMessage.channel.send("It looks like Rebrickable is down, I can't get my data! 😐");
+			client.legBotMessage.reply("It looks like Rebrickable is down, I can't get my data! 😐");
 			client.legBotMessage.react('😐')
 			log("part-db-error," + partNo);
 		}
@@ -377,9 +377,9 @@ getPartsInfos = async function(partNo, retry) {
 
 			partsInfo
 			.addField('Shop : ', "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", true)
-			.setFooter('Source : '+ part.part_url);
+			.setFooter({"text": 'Source : '+ part.part_url, "iconURL": "https://rebrickable.com/static/img/favicon.png"});
 
-		client.legBotMessage.channel.send({ embeds: [partsInfo]})
+		client.legBotMessage.reply({ embeds: [partsInfo]})
 			.then(function(message) {
 				enableDeleteOption(message),
 				enableImageEnlargeOption(message, part.part_img_url)
@@ -390,7 +390,7 @@ getPartsInfos = async function(partNo, retry) {
 			/* First time we failed, let's try to use the "search" feature of Rebrickable ! */
 			getPartsInfos(partNo, true);
 		} else {
-			client.legBotMessage.channel.send("I'm so sorry **"+ client.legBotMessage.author.username +"**, I could not find the part you were looking for. :(");
+			client.legBotMessage.reply("I'm so sorry **"+ client.legBotMessage.author.username +"**, I could not find the part you were looking for. :(");
 			client.legBotMessage.react('🙄')
 			log("part-not-found," + partNo);
 		}
@@ -491,7 +491,7 @@ enableImageEnlargeOption = function(message, imageURL) {
 
 	collector.on("collect", (reaction, user) => {
 		if (!!message && !!imageURL && (reactions.indexOf(reaction.emoji.name) != -1)) {
-			client.legBotMessage.channel.send(imageURL)
+			client.legBotMessage.postedMessage.reply(imageURL)
 			.then(function(message) { enableDeleteOption(message)});
 		}
 	});

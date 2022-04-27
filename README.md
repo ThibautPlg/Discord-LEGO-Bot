@@ -101,6 +101,14 @@ Giving a tip through Liberapay or Coindrop will help me paying the monthly bill 
 ## Changelog
 Legbot changelog and versions are available on the [release page](https://github.com/ThibautPlg/Discord-LEGO-Bot/releases).
 
+- 1.5.5
+  - The `!set` command now returns the designers of the sets (if available) and the related Bricklist.
+    - Require an external script to get this data.
+  - Improving `!set` string parsing in middle of sentences.
+  - "Delete" and "bigger picture" reactions have now a timeout of 240 seconds instead of 120.
+  - Legbot now replies directly to the original message.
+  - Adding websites favicon at the bottom of cards depending on the origin of the data.
+  - Upgrading discord.js version and changing node-fetch call to match the new behaviour of the library.
 - 1.5.4
   - Improving the `!part` search using a Levenshtein implementation to find the most relevant results.
   - Adding the "Print of" section in the part card if the given result is a printed version of a brick.

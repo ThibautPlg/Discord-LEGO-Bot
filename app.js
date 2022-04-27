@@ -11,7 +11,7 @@ const client = new Client({
 const config = require('./config.json');
 const package = require('./package.json');
 const fs = require('fs');
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const {distance, closest} = require('fastest-levenshtein');
 const { URLSearchParams } = require('url');
 

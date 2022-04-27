@@ -74,7 +74,7 @@ This bot is based on the [discord.js](https://discord.js.org/) library.
 
 
 ## Requirements :
-- NodeJS 16.x or higher
+- NodeJS 16.9.x or higher
 ## Installation :
 - Clone this repo
 - Delete README.md and the readme.assets directory (optionnal)

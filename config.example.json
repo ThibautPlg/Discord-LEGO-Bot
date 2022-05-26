@@ -1,6 +1,11 @@
 {
-	"trigger": "!",
+	"legacy" : {
+		"enabled": false,
+		"trigger":"!",
+		"moreFunctions": ["/absolute/path/to/example.js", "./custom/mixelJoint.js"]
+	},
     "token": "blablabla",
+	"clientId": "get from https://discord.com/developers/applications/",
 	"rebrickableToken": "my studs are bigger than yours",
 	"bricksetApiKey": "Mixels will come back",
     "log": {
@@ -9,7 +14,6 @@
 		"debug": false
 	},
 	"maximumSearchResults": 10,
-	"randomSetURL": "http://mywebsite.com/random-set.php",
-	"designerDatabaseURL": "https://mywebsite.com/?query=",
-	"moreFunctions": ["/absolute/path/to/example.js", "./custom/mixelJoint.js"]
+	"randomSetURL": "https://gist.github.com/ThibautPlg/6ac975566323157f802c91c7cb77993b",
+	"designerDatabaseURL": "https://mywebsite.com/?query="
 }

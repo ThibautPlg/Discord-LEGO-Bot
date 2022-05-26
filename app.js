@@ -1,4 +1,12 @@
-const { Client, Intents, MessageEmbed, Permissions } = require('discord.js');
+const config = require('./config.json');
+const package = require('./package.json');
+
+const { Client, Intents, MessageEmbed, Collection } = require('discord.js');
+const { REST } = require('@discordjs/rest');
+const { Routes } = require('discord-api-types/v9');
+const { clientId, token } = require('./config.json');
+const fs = require('fs');
+const path = require('path');
 const client = new Client({
 	partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
 	intents: [
@@ -6,91 +14,64 @@ const client = new Client({
 		Intents.FLAGS.GUILD_MESSAGES,
 		Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
 		Intents.FLAGS.DIRECT_MESSAGES,
-		Intents.FLAGS.DIRECT_MESSAGE_REACTIONS]
+		Intents.FLAGS.DIRECT_MESSAGE_REACTIONS],
+	retryLimit: 2,
+	presence: {
+		status: "online",
+		activities: [{
+			name: " slash commands now!",
+			type: "LISTENING"
+		}]
+	}
 });
-const config = require('./config.json');
-const package = require('./package.json');
-const fs = require('fs');
+
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const {distance, closest} = require('fastest-levenshtein');
 const { URLSearchParams } = require('url');
 
-client.once('ready', () => {
-    log("restart,"+package.version)
+client.commands = new Collection();
+const commands = [];
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+	const filePath = path.join(commandsPath, file);
+	const command = require(filePath);
+	client.commands.set(command.data.name, command);
+	commands.push(command.data.toJSON());
+}
+
+client.on('interactionCreate', async interaction => {
+	if (!interaction.isCommand()) return;
+	const command = client.commands.get(interaction.commandName);
+
+	if (!command) return;
+	try {
+		await command.execute(interaction);
+	} catch (error) {
+		log("error,"+error);
+		interaction.editReply("Something went wrong on my side, sorry! 😐");
+	}
 });
+
 client.login(config.token);
 
-client.on('messageCreate', postedMessage => {
-	var regex = new RegExp(config.trigger+'.*?', 'gi' );
-
-    if (postedMessage.content.match(regex)) {
-
-		var triggerLocation = postedMessage.content.indexOf(config.trigger);
-        var args = postedMessage.content.substring(triggerLocation+1, postedMessage.content.length).split(' ');
-		var cmd = args[0];
-		var argsSentence = args.slice(1).join(' ');
-		args = args[1];
-
-		client.legBotMessage = postedMessage;
-
-        switch(cmd) {
-            case '#':
-            case 'set':
-                getSetInfos(args);
-            break;
-            case "part":
-                getPartsInfos(args);
-            break;
-            case 'bl':
-                postedMessage.reply(encodeURI('https://www.bricklink.com/v2/catalog/catalogitem.page?S='+args));
-                log("bl," + args);
-            break;
-            case 'bi':
-            case "review":
-                getReview(args);
-            break;
-            case "bs":
-                postedMessage.reply(encodeURI('https://brickset.com/sets/'+parseSetID(args)));
-                log("bs," + args);
-            break;
-            case "LegBot":
-            case "help":
-                showHelp();
-            break;
-            case "inviteLegBot":
-				postedMessage.author.send(client.generateInvite({scopes: ['bot'],permissions: [Permissions.DEFAULT] }));
-                log("invite,"+package.version);
-            break;
-            case "credits":
-                showCredits();
-            break;
-            case "botinfo":
-                showStats();
-            break;
-			case "search":
-				searchBrickset(argsSentence);
-			break;
-         }
-     }
-});
-
+const rest = new REST({ version: '9' }).setToken(token);
+rest.put(
+	Routes.applicationCommands(clientId),
+	{ body: commands },
+);
 
 /**************************  FUNCTIONS *******************************/
 
 getReview = async function(set) {
-
-	if (!argumentIsValid(set, "review-no-id,")) {
-		return;
-	}
 	set = cleanArgument(set);
-
-	var postedMessage = client.legBotMessage;
 
     var review = await fetch('https://brickinsights.com/api/sets/'+parseSetID(set)).then(
 		response => response.json(),
 		err => {
 			log("review-db-error," + set);
-			postedMessage.reply("It looks like Brickinsights is down, I can't get my data! 😐");
+			return("It looks like Brickinsights is down, I can't get my data! 😐");
 		}
 	);
 
@@ -106,21 +87,14 @@ getReview = async function(set) {
 		.setFooter({"text":'Source : BrickInsignt'});
 
 		log("review," + set);
-
-		postedMessage.reply({ embeds: [message]})
-			.then(function(message) { enableDeleteOption(message)});
+		return({ embeds: [message]});
     } else if (review){
 		log("review-not-found," + set);
-		postedMessage.reply("There is no review available on Brickinsights.com for the set "+set);
+		return("There is no review available on Brickinsights.com for the set "+set);
 	}
 }
 
 getSetInfos = async function(setNumber) {
-	var postedMessage = client.legBotMessage;
-
-	if (!argumentIsValid(setNumber, "set-no-id,")) {
-		return;
-	}
 	setNumber = cleanArgument(setNumber);
 
 	var BInsight = encodeURI('https://brickinsights.com/sets/'+ parseSetID(setNumber));
@@ -130,12 +104,10 @@ getSetInfos = async function(setNumber) {
 
 	if (set.matches <= 0) {
 		log("set-not-found," + setNumber);
-		postedMessage.reply("Set "+setNumber+" not found... ");
-		client.legBotMessage.react('🙄');
+		return("Set "+setNumber+" not found... ");
 	} else if (set.status && set.status !== "success") {
         log("set-db-error," + setNumber);
-		postedMessage.reply("Ooops, something is wrong with my database... ");
-		client.legBotMessage.react('🙄');
+		return("Ooops, something is wrong with my database... ");
     } else {
 		set = set.sets[0];
 		var instructions = await askBrickset("getInstructions2", "setNumber", set.number);
@@ -197,18 +169,12 @@ getSetInfos = async function(setNumber) {
 		setCard.setFooter({"text":'Source : Brickset', "iconURL": "https://brickset.com/favicon.ico"});
 
         log("set," + setNumber);
-        postedMessage.reply({ embeds: [setCard]})
-			.then(function(message) {
-				enableDeleteOption(message),
-				enableImageEnlargeOption(message, thumbnail)
-			});
+        return({ embeds: [setCard]})
     }
 }
 
 /* beta */
 searchBrickset = async function(query) {
-	var postedMessage = client.legBotMessage;
-
 	var sets = await askBrickset("getSets", "params", "{'query':'"+query+"', 'orderBy':'Rating'}");
 
 	var matches = sets.matches;
@@ -229,63 +195,52 @@ searchBrickset = async function(query) {
 		answer.addField(":notebook_with_decorative_cover: Brickset search results", encodeURI("https://brickset.com/sets?query="+query));
 
 		answer.setFooter({"text": 'Use `!set {set number}` to see more!', "iconURL": "https://thibautplg.github.io/legbot/img/legBot.png"});
-		postedMessage.reply({ embeds: [answer]});
 		log("search,"+query);
+		return({ embeds: [answer]});
 	} else if(matches === 1) {
 		log("search-direct-result,"+query);
-		getSetInfos(String(apiFinds[0].number+"-"+apiFinds[0].numberVariant));
+		return getSetInfos(String(apiFinds[0].number+"-"+apiFinds[0].numberVariant));
 	} else {
 		log("search-not-found,"+query);
-		postedMessage.reply("Nothing found for \""+query+"\".");
+		return("Nothing found for \""+query+"\".");
 	}
 }
 
-showStats = function() {
-
-    var stats = new MessageEmbed()
-        .setColor("#3F51B5")
-        .setTitle("LegBot")
-        .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
-        .setURL("https://github.com/ThibautPlg/Discord-LEGO-Bot")
-        .addField('ID', client.user.id)
-        .addField('Uptime', (process.uptime() + "").toHHMMSS(), true)
-        .addField('Version', package.version, true)
-        .addField('\u200b', '\u200b', true)
-        .addField('Server count', String((client.guilds.cache).size), true)
-        .addField('Total channels', String((client.channels.cache).size), true)
-        .addField('Total users', String((client.users.cache).size), true);
-    log("stats,"+package.version);
-	client.legBotMessage.reply({ embeds: [stats]})
-		.then(function(message) { enableDeleteOption(message)});
-}
-
-showHelp = function() {
-    var t = config.trigger;
+showHelp = async function() {
+    var t = "/";
     var help = new MessageEmbed()
         .setColor("#009688")
         .setTitle("LegBot help")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
         .addField('Hey!', "Thanks for using this LEGO bot! :kissing_smiling_eyes: \n To use me, type the following commands :")
         .addField('Commands : ', "`"+t+"set [SET NUMBER]`  to have general informations about a set.\n"+
-		"`"+t+"search [QUERY]` to search a set by name. {beta}\n"+
-        "`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id).\n"+
-        "`"+t+"mixeljoint`  to have the list of the most used mixeljoint (with an awesome drawing of each).\n"+
-        "`"+t+"bs [SET NUMBER]`  to show a link to Brickset about the provided set number \n"+
-        "`"+t+"bl [SET NUMBER]`  to show a BrickLink link to the searched set number \n"+
-        "`"+t+"review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"+
-        "`"+t+"help`  to display this message... Not that useful if you're reading this tho. \n "+
-        "`"+t+"inviteLegBot` to get a link to invite LegBot to your server. \n"+
-        "`"+t+"credits`  to show dev credits. \n \n")
-		.addField("Reactions :",
-		"You can add a \"🗑️\" reaction to most of the bot messages within a minute to remove them. \n"+
-		"You can add a \"🔎\", \"🔍\" or \"🖼️\" reaction on the set or part command to have a bigger image.");
+			"`"+t+"search [QUERY]` to search a set by name. {beta}\n"+
+			"`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id).\n"+
+			"`"+t+"review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"+
+			"`"+t+"setoftheday`  to get Brickset's set of the day \n"+
+			"`"+t+"legbot`  to display this message... Not that useful if you're reading this tho. \n "+
+			"`"+t+"credits`  to show dev credits. \n \n"
+		);
+		if (config && config.legacy && config.legacy.enabled){
+			var trigger = config.legacy.trigger;
+			help.addField("Legacy commands :",
+				"`"+trigger+"set [SET NUMBER]`  to have general informations about a set.\n"+
+				"`"+trigger+"review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"+
+				"`"+trigger+"part [PART ID]`  to have informations about a piece (Bricklink id)\n"+
+				"`"+trigger+"mixeljoint`  to have the list of the most used mixeljoint (with an awesome drawing of each).\n"+
+				"**These commands can be used in the middle of a sentence.** \n"
+			)
+		}
+		help.addField("Reactions :",
+			"You can add a \"🗑️\" reaction to most of the bot messages within 4 minutes to remove them. \n"+
+			"You can add a \"🔎\", \"🔍\" or \"🖼️\" reaction on the set or part command to have a bigger image."
+		);
 
     log("help,"+package.version);
-	client.legBotMessage.reply({ embeds: [help]})
-		.then(function(message) { enableDeleteOption(message)});
+	return({ embeds: [help]});
 }
 
-showCredits = function() {
+showCredits = async function() {
     var credits = new MessageEmbed()
         .setColor("#03A9F4")
         .setTitle("LegBot")
@@ -300,17 +255,18 @@ showCredits = function() {
         - BrickLink links : https://www.bricklink \n \
         - BrickOwl links : https://www.brickowl.com\n")
         .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
-        .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)");
+        .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)")
+		.addField('Uptime', (process.uptime() + "").toHHMMSS(), true)
+        .addField('Version', package.version, true)
+        .addField('\u200b', '\u200b', true)
+        .addField('Server count', String((client.guilds.cache).size), true)
     log("credits,"+package.version);
-	client.legBotMessage.reply({ embeds: [credits]})
-		.then(function(message) { enableDeleteOption(message)});
+	return({ embeds: [credits]});
 }
 
 getPartsInfos = async function(partNo, retry) {
 
-	if (!argumentIsValid(partNo, "part-no-id,")) {
-		return;
-	}
+	fullCommand = partNo;
 	partNo = cleanArgument(partNo);
 	toSearch = partNo;
 	var key = "key="+config.rebrickableToken;
@@ -322,7 +278,6 @@ getPartsInfos = async function(partNo, retry) {
 	if(!!retry) {
 		// It may be a full string, let's use the search API
 		// beta
-		var fullCommand = client.legBotMessage.content.substring(client.legBotMessage.content.indexOf(config.trigger)+1, client.legBotMessage.content.length);
 		var computedCommand = fullCommand.match(/^part "(.*)"/);
 		if(!!computedCommand && !!computedCommand[1]) {
 			toSearch = computedCommand[1];
@@ -333,9 +288,8 @@ getPartsInfos = async function(partNo, retry) {
 	var partFetch = await fetch(partQuery).then(
 		response => response.json(),
 		err => {
-			client.legBotMessage.reply("It looks like Rebrickable is down, I can't get my data! 😐");
-			client.legBotMessage.react('😐')
 			log("part-db-error," + partNo);
+			return("It looks like Rebrickable is down, I can't get my data! 😐");
 		}
 	);
 
@@ -384,34 +338,29 @@ getPartsInfos = async function(partNo, retry) {
 			.setThumbnail(part.part_img_url)
 			.addField('General', productionState + part.name +"\n "+releaseString);
 
-			if(part.molds && part.molds.length) {
-				partsInfo.addField("Similar to", getSimilarParts(part.molds));
-			} else if(part.alternates && part.alternates.length) {
-				partsInfo.addField("See also", getSimilarParts(part.alternates));
-			}
+		if(part.molds && part.molds.length) {
+			partsInfo.addField("Similar to", getSimilarParts(part.molds));
+		} else if(part.alternates && part.alternates.length) {
+			partsInfo.addField("See also", getSimilarParts(part.alternates));
+		}
 
-			if(part.print_of && part.print_of.length) {
-				partsInfo.addField("Print of", "["+part.print_of+"](https://rebrickable.com/parts/"+part.print_of+")" );
-			}
+		if(part.print_of && part.print_of.length) {
+			partsInfo.addField("Print of", "["+part.print_of+"](https://rebrickable.com/parts/"+part.print_of+")" );
+		}
 
-			partsInfo
+		partsInfo
 			.addField('Shop : ', "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", true)
 			.setFooter({"text": 'Source : '+ part.part_url, "iconURL": "https://rebrickable.com/static/img/favicon.png"});
 
-		client.legBotMessage.reply({ embeds: [partsInfo]})
-			.then(function(message) {
-				enableDeleteOption(message),
-				enableImageEnlargeOption(message, part.part_img_url)
-			});
 		log("part," + partNo);
+		return({ embeds: [partsInfo]});
 	} else if (partFetch){
 		if (!retry) {
 			/* First time we failed, let's try to use the "search" feature of Rebrickable ! */
-			getPartsInfos(partNo, true);
+			return getPartsInfos(partNo, true);
 		} else {
-			client.legBotMessage.reply("I'm so sorry **"+ client.legBotMessage.author.username +"**, I could not find the part you were looking for. :(");
-			client.legBotMessage.react('🙄')
 			log("part-not-found," + partNo);
+			return("I could not find the part you were looking for. :(");
 		}
 	}
 }
@@ -502,7 +451,6 @@ fetchDesigners = async function(setNumber) {
 	}
 }
 
-
 enableDeleteOption = function(message) {
 	const filter = (reaction, user) => { return user.id !== message.author.id; }
 
@@ -515,19 +463,22 @@ enableDeleteOption = function(message) {
 	});
 }
 
-enableImageEnlargeOption = function(message, imageURL) {
-	const filter = (reaction, user) => { return user.id !== message.author.id; }
+enableImageEnlargeOption = async function(message, result) {
 
-	const collector = message.createReactionCollector({ filter, time: 240000 });
+	if(!!result && !!result.embeds && !!result.embeds[0] && !!result.embeds[0].thumbnail) {
+		imageURL = result.embeds[0].thumbnail["url"]
 
-	const reactions = ['🔎', '🔍', '🖼️'];
+		const filter = (reaction, user) => { return user.id !== message.author.id; }
+		const collector = message.createReactionCollector({ filter, time: 240000 });
+		const reactions = ['🔎', '🔍', '🖼️'];
 
-	collector.on("collect", (reaction, user) => {
-		if (!!message && !!imageURL && (reactions.indexOf(reaction.emoji.name) != -1)) {
-			client.legBotMessage.postedMessage.reply(imageURL)
-			.then(function(message) { enableDeleteOption(message)});
-		}
-	});
+		collector.on("collect", (reaction, user) => {
+			if (!!message && !!imageURL && (reactions.indexOf(reaction.emoji.name) != -1)) {
+				message.reply({ content: imageURL})
+				.then(function(message) { enableDeleteOption(message)});
+			}
+		});
+	}
 }
 /*************************   Stuff used by functions      ****************************/
 
@@ -565,30 +516,39 @@ askBrickset = async function(endpoint, param, args) {
 formatPrice = function(set) {
 	let prices = [];
 	if (set.LEGOCom && set.LEGOCom.US && set.LEGOCom.US.retailPrice) {
+		let sign = '$';
 		prices.push({
-			sign: '$',
 			price: set.LEGOCom.US.retailPrice,
-			priceString: '$'+set.LEGOCom.US.retailPrice,
+			priceString: sign+set.LEGOCom.US.retailPrice,
 			ppp: (set.LEGOCom.US.retailPrice/set.pieces).toFixed(2),
-			pppString: '$'+(set.LEGOCom.US.retailPrice/set.pieces).toFixed(2)
+			pppString: sign+(set.LEGOCom.US.retailPrice/set.pieces).toFixed(2)
 		});
 	}
 	if (set.LEGOCom && set.LEGOCom.UK && set.LEGOCom.UK.retailPrice) {
+		let sign = '£';
 		prices.push({
-			sign: '£',
 			price: set.LEGOCom.UK.retailPrice,
-			priceString: '£'+set.LEGOCom.UK.retailPrice,
+			priceString: sign+set.LEGOCom.UK.retailPrice,
 			ppp: (set.LEGOCom.UK.retailPrice/set.pieces).toFixed(2),
-			pppString: '£'+(set.LEGOCom.UK.retailPrice/set.pieces).toFixed(2)
+			pppString: sign+(set.LEGOCom.UK.retailPrice/set.pieces).toFixed(2)
 		});
 	}
 	if (set.LEGOCom && set.LEGOCom.DE && set.LEGOCom.DE.retailPrice) {
+		let sign = '€';
 		prices.push({
-			sign: '€',
 			price: set.LEGOCom.DE.retailPrice,
-			priceString: set.LEGOCom.DE.retailPrice+"€",
+			priceString: set.LEGOCom.DE.retailPrice+sign,
 			ppp: (set.LEGOCom.DE.retailPrice/set.pieces).toFixed(2),
-			pppString: (set.LEGOCom.DE.retailPrice/set.pieces).toFixed(2)+'€'
+			pppString: (set.LEGOCom.DE.retailPrice/set.pieces).toFixed(2)+sign
+		});
+	}
+	if (set.LEGOCom && set.LEGOCom.CA && set.LEGOCom.CA.retailPrice) {
+		let sign = 'C$';
+		prices.push({
+			price: set.LEGOCom.CA.retailPrice,
+			priceString: sign+set.LEGOCom.CA.retailPrice,
+			ppp: (set.LEGOCom.CA.retailPrice/set.pieces).toFixed(2),
+			pppString: sign+(set.LEGOCom.CA.retailPrice/set.pieces).toFixed(2)
 		});
 	}
 
@@ -609,6 +569,10 @@ formatPrice = function(set) {
 		message += "**";
 		message += "\n";
 		message += ppp+"**\n"
+
+		if (set.dimensions && set.dimensions.weight && set.dimensions.weight > 0) {
+			message += "**"+(set.pieces/set.dimensions.weight).toFixed(2)+"** pieces per KG";
+		}
 		return message;
 	} else {
 		return "No price data available."
@@ -623,7 +587,7 @@ cleanArgument = function(arg) {
 /* Is my arg something valid ?
 * Returns true if the arg is a string containing letters and numbers
 */
-argumentIsValid = function(arg, toLog) {
+argumentIsValid = async function(arg, interaction, toLog) {
 	if (arg === undefined || arg.length < 1) {
 		log(toLog + arg);
 		client.legBotMessage.react('🤔');
@@ -632,13 +596,8 @@ argumentIsValid = function(arg, toLog) {
 		log("no args,"+package.version);
 		return false;
 	} else if((bannedSearches.indexOf(arg) > -1)) {
-		if(arg.match(/69/)) {
-			client.legBotMessage.react('🥵');
-			client.legBotMessage.react('😳');
-		}
-		if(arg.match(/420/)) {
-			client.legBotMessage.react('🤯');
-		}
+		let message = await interaction.editReply({content: "Invalid number!", ephemeral: true});
+		message.react('🙄');
 		log("well,"+arg);
 		return false;
 	} else {
@@ -679,19 +638,31 @@ debug = function(msg) {
 		console.log(msg + "\n");
 	}
 }
-/*********************** Custom functions if needed *********************/
-if (config && config.moreFunctions){
-	var customFiles = config.moreFunctions;
-	if (!Array.isArray(config.moreFunctions)){
-		customFiles = [customFiles];
+
+/*********************** Include LEGACY mode if required *********************/
+/**
+ * This mode can only be used on instances that are actives in less than 100 servers
+ * as Discord disabled the reading of the message content.
+ * Enable by toggling "config.legacy.enabled" to true.
+ */
+if (config && config.legacy && config.legacy.enabled && ((client.guilds.cache).size < 100)){
+
+	eval(fs.readFileSync("./commands/legacy/legacy.js")+'');
+
+	/******* Custom functions ********/
+	if (config.legacy.moreFunctions){
+		var customFiles = config.legacy.moreFunctions;
+		if (!Array.isArray(config.legacy.moreFunctions)){
+			customFiles = [customFiles];
+		}
+		customFiles.forEach(customFile => {
+			eval(fs.readFileSync(customFile)+'');
+		});
 	}
-	customFiles.forEach(customFile => {
-		eval(fs.readFileSync(customFile)+'');
-	});
 }
 
 
-/*********************** Banned searchs *********************/
+/*********************** Banned searches *********************/
 /* Because searching the !set 69 is very funny, but uses bandwidth
 and resources ! This list is based on logs analysis.*/
 const bannedSearches = [

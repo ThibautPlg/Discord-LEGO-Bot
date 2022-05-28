@@ -517,44 +517,65 @@ formatPrice = function(set) {
 	let prices = [];
 	if (set.LEGOCom && set.LEGOCom.US && set.LEGOCom.US.retailPrice) {
 		let sign = '$';
-		prices.push({
+		let data = {
 			price: set.LEGOCom.US.retailPrice,
 			priceString: sign+set.LEGOCom.US.retailPrice,
 			ppp: (set.LEGOCom.US.retailPrice/set.pieces).toFixed(2),
 			pppString: sign+(set.LEGOCom.US.retailPrice/set.pieces).toFixed(2)
-		});
+		};
+		if (set.dimensions && set.dimensions.weight && set.dimensions.weight > 0) {
+			data.ppk = (set.LEGOCom.US.retailPrice/set.dimensions.weight).toFixed(2),
+			data.ppkString = sign+(set.LEGOCom.US.retailPrice/set.dimensions.weight).toFixed(2)
+		}
+		prices.push(data);
 	}
 	if (set.LEGOCom && set.LEGOCom.UK && set.LEGOCom.UK.retailPrice) {
 		let sign = '£';
-		prices.push({
+		let data = {
 			price: set.LEGOCom.UK.retailPrice,
 			priceString: sign+set.LEGOCom.UK.retailPrice,
 			ppp: (set.LEGOCom.UK.retailPrice/set.pieces).toFixed(2),
 			pppString: sign+(set.LEGOCom.UK.retailPrice/set.pieces).toFixed(2)
-		});
+		};
+		if (set.dimensions && set.dimensions.weight && set.dimensions.weight > 0) {
+			data.ppk = (set.LEGOCom.UK.retailPrice/set.dimensions.weight).toFixed(2),
+			data.ppkString = sign+(set.LEGOCom.UK.retailPrice/set.dimensions.weight).toFixed(2)
+		}
+		prices.push(data);
 	}
 	if (set.LEGOCom && set.LEGOCom.DE && set.LEGOCom.DE.retailPrice) {
 		let sign = '€';
-		prices.push({
+		let data = {
 			price: set.LEGOCom.DE.retailPrice,
 			priceString: set.LEGOCom.DE.retailPrice+sign,
 			ppp: (set.LEGOCom.DE.retailPrice/set.pieces).toFixed(2),
 			pppString: (set.LEGOCom.DE.retailPrice/set.pieces).toFixed(2)+sign
-		});
+		};
+		if (set.dimensions && set.dimensions.weight && set.dimensions.weight > 0) {
+			data.ppk = (set.LEGOCom.DE.retailPrice/set.dimensions.weight).toFixed(2),
+			data.ppkString = (set.LEGOCom.DE.retailPrice/set.dimensions.weight).toFixed(2)+sign
+		}
+		prices.push(data);
 	}
 	if (set.LEGOCom && set.LEGOCom.CA && set.LEGOCom.CA.retailPrice) {
 		let sign = 'C$';
-		prices.push({
+		let data = {
 			price: set.LEGOCom.CA.retailPrice,
 			priceString: sign+set.LEGOCom.CA.retailPrice,
 			ppp: (set.LEGOCom.CA.retailPrice/set.pieces).toFixed(2),
 			pppString: sign+(set.LEGOCom.CA.retailPrice/set.pieces).toFixed(2)
-		});
+		};
+		if (set.dimensions && set.dimensions.weight && set.dimensions.weight > 0) {
+			data.ppk = (set.LEGOCom.CA.retailPrice/set.dimensions.weight).toFixed(2),
+			data.ppkString = sign+(set.LEGOCom.CA.retailPrice/set.dimensions.weight).toFixed(2)
+		}
+		prices.push(data);
 	}
 
 	if (prices.length) {
 		let message = 'Priced **';
 		let ppp = "Price per Piece ratio : **";
+		let ppk = "Price per KG ratio : **";
 		for (const index in prices) {
 			if (Object.hasOwnProperty.call(prices, index)) {
 				let price = prices[index];
@@ -564,15 +585,14 @@ formatPrice = function(set) {
 				}
 				message += price.priceString + separator;
 				ppp += price.pppString + separator;
+				if (set.dimensions && set.dimensions.weight && set.dimensions.weight > 0) {
+					ppk += price.ppkString + separator;
+				}
 			}
 		}
 		message += "**";
 		message += "\n";
-		message += ppp+"**\n"
-
-		if (set.dimensions && set.dimensions.weight && set.dimensions.weight > 0) {
-			message += "**"+(set.pieces/set.dimensions.weight).toFixed(2)+"** pieces per KG";
-		}
+		message += ppp+"**\n"+ppk+"**\n";
 		return message;
 	} else {
 		return "No price data available."

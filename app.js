@@ -282,7 +282,7 @@ getPartsInfos = async function(partNo, retry) {
 		if(!!computedCommand && !!computedCommand[1]) {
 			toSearch = computedCommand[1];
 		}
-		partQuery = 'https://rebrickable.com/api/v3/lego/parts/?search='+encodeURI(toSearch)+"&page_size=20&ordering=part_cat_id&inc_part_details=1&"+key; //35164 is 42022
+		partQuery = 'https://rebrickable.com/api/v3/lego/parts/?search='+encodeURI(toSearch)+"&page_size=20&inc_part_details=1&"+key; //35164 is 42022
 	}
 
 	var partFetch = await fetch(partQuery).then(
@@ -424,7 +424,7 @@ guessMostRelevantPart = function(query, partList) {
 					"id": bricklinkId
 				});
 			});
-			weight = +Math.min.apply(null, subWeight.map(function(o) { return o.weight; }));
+			weight =+ Math.min.apply(null, subWeight.map(function(o) { return o.weight; }));
 		}
 
 		/* Weight increases if brickset ID is different */
@@ -436,7 +436,10 @@ guessMostRelevantPart = function(query, partList) {
 					"id": bricksetId
 				});
 			});
-			weight = +Math.min.apply(null, subWeight.map(function(o) { return o.weight; }));
+			weight =+ Math.min.apply(null, subWeight.map(function(o) { return o.weight; }));
+		}
+		if(((part.name).toLowerCase()).match(new RegExp("\\W"+query+"\\W", "gmi"))) {
+			weight--;
 		}
 
 		comptedWeights.push({

@@ -321,22 +321,34 @@ getPartsInfos = async function(partNo, retry) {
 			// Still in production ?
 			productionState = "[:green_circle: Still in production] \n";
 			color = "#8BC34A";
+		} else if(!part.year_from){
+			// There is no date so it may be new ? We don't know !
+			productionState = "";
+			color = "#2E8BC0";
 		} else {
 			productionState = "[:orange_circle:  No more produced] \n";
 			color = "#F2CD37";
 		}
 
-		var releaseString = "Released in "+ part.year_from;
-		if (part.year_from !== part.year_to) {
-			releaseString += ", at least produced until "+ part.year_to;
+		let releaseString = "";
+		if (part.year_from) {
+			releaseString = "Released in "+ part.year_from;
+
+			if (part.year_from !== part.year_to) {
+				releaseString += ", at least produced until "+ part.year_to;
+			}
 		}
 
 		const partsInfo = new MessageEmbed()
 			.setColor(color)
-			.setTitle(part.name)
+			.setTitle(rebrickableNo + " : " +part.name)
 			.setURL(part.part_url)
 			.setThumbnail(part.part_img_url)
 			.addField('General', productionState + part.name +"\n "+releaseString);
+
+		if(bricklinkId) {
+			partsInfo.addField("Colors : ","[Bricklink inventory](https://www.bricklink.com/catalogItemIn.asp?P="+bricklinkId+"&v=3&in=S)");
+		}
 
 		if(part.molds && part.molds.length) {
 			partsInfo.addField("Similar to", getSimilarParts(part.molds));

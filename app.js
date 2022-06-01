@@ -575,7 +575,10 @@ formatPrice = function(set) {
 	if (prices.length) {
 		let message = 'Priced **';
 		let ppp = "Price per Piece ratio : **";
-		let ppk = "Price per KG ratio : **";
+		let ppk = "";
+		if (set.dimensions && set.dimensions.weight && set.dimensions.weight > 0) {
+			let ppk = "Price per KG ratio : **";
+		}
 		for (const index in prices) {
 			if (Object.hasOwnProperty.call(prices, index)) {
 				let price = prices[index];

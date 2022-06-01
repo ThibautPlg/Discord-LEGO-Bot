@@ -589,7 +589,7 @@ formatPrice = function(set) {
 		let ppp = "Price per Piece ratio : **";
 		let ppk = "";
 		if (set.dimensions && set.dimensions.weight && set.dimensions.weight > 0) {
-			let ppk = "Price per KG ratio : **";
+			ppk = "** Price per KG ratio : **";
 		}
 		for (const index in prices) {
 			if (Object.hasOwnProperty.call(prices, index)) {
@@ -607,7 +607,7 @@ formatPrice = function(set) {
 		}
 		message += "**";
 		message += "\n";
-		message += ppp+"**\n"+ppk+"**\n";
+		message += ppp+"\n"+ppk+"**\n";
 		return message;
 	} else {
 		return "No price data available."
@@ -682,7 +682,7 @@ debug = function(msg) {
  */
 if (config && config.legacy && config.legacy.enabled && ((client.guilds.cache).size < 100)){
 
-	eval(fs.readFileSync("./commands/legacy/legacy.js")+'');
+	eval(fs.readFileSync(path.join(__dirname, 'commands/legacy/legacy.js'))+'');
 
 	/******* Custom functions ********/
 	if (config.legacy.moreFunctions){

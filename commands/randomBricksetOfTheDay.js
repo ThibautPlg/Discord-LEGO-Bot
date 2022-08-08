@@ -24,6 +24,16 @@ if (config && config.randomSetURL) {
 		log("randomSetOfTheDay,0");
 
 		fetch(config.randomSetURL).then(res => res.text())
-		.then(text => getSetInfos(text, interaction));
+		.then(text =>
+			getSetInfos(text, interaction).then(
+				async function(result) {
+					interaction.editReply(result)
+					.then(function(message) {
+						enableDeleteOption(message),
+						enableImageEnlargeOption(message, result)
+					});
+				}
+			)
+		);
 	}
 }

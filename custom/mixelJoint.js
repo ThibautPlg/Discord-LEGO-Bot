@@ -2,7 +2,7 @@
 You'll be able to add custom commands following this example */
 
 client.on('messageCreate', message => {
-    if (message.content.substring(0, 1) == config.trigger) {
+    if (message.content.substring(0, 1) == config.legacy.trigger) {
         var args = message.content.substring(1).split(' ');
         var cmd = args[0];
 
@@ -10,13 +10,13 @@ client.on('messageCreate', message => {
         switch(cmd) {
             case 'mixeljoint':
             case 'mixeljoints':
-				getMixelJoints();
+				getMixelJoints(message);
             break;
          }
      }
 });
 
-getMixelJoints = function() {
+getMixelJoints = function(message) {
 	var mixelJoints = [
 		{
 			name: "Plate, Modified 1 x 2 with Small Tow Ball Socket on Side",
@@ -60,19 +60,19 @@ getMixelJoints = function() {
 		}
 	]
 
-	const mixelMessage = new MessageEmbed()
+	const mixelMessage = new EmbedBuilder()
 		.setColor("#673AB7")
 		.setTitle("Mixel Joints");
 
 		for (var piece of mixelJoints){
-			mixelMessage.addField(
-					piece['name'],
-					"Part id ["+piece['id']+"]("+piece['bl']+") | **"+piece['artisticRepresantation']+"**",
-					true
-			)
+			mixelMessage.addFields([{
+					name: piece['name'],
+					value: "Part id ["+piece['id']+"]("+piece['bl']+") | **"+piece['artisticRepresantation']+"**",
+					inline: true
+			}])
 		}
 
-	client.legBotMessage.channel.send({ embeds: [mixelMessage]})
+		message.reply({ embeds: [mixelMessage]})
 		.then(function(message) {enableDeleteOption(message)});
 	log("mixelJoint,0");
 }

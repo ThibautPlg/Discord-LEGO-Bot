@@ -1,20 +1,25 @@
 const config = require('./config.json');
 const package = require('./package.json');
 
-const { Client, Intents, MessageEmbed, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, Collection, InteractionType, Partials} = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { clientId, token } = require('./config.json');
 const fs = require('fs');
 const path = require('path');
 const client = new Client({
-	partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
+	partials: [
+		Partials.Message,
+		Partials.Channel,
+		Partials.Reaction
+	],
 	intents: [
-		Intents.FLAGS.GUILDS,
-		Intents.FLAGS.GUILD_MESSAGES,
-		Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-		Intents.FLAGS.DIRECT_MESSAGES,
-		Intents.FLAGS.DIRECT_MESSAGE_REACTIONS],
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.GuildMessageReactions,
+		GatewayIntentBits.DirectMessages,
+		GatewayIntentBits.DirectMessageReactions
+	],
 	retryLimit: 2,
 	presence: {
 		status: "online",
@@ -42,7 +47,7 @@ for (const file of commandFiles) {
 }
 
 client.on('interactionCreate', async interaction => {
-	if (!interaction.isCommand()) return;
+	if (!(interaction.type === InteractionType.ApplicationCommand)) return;
 	const command = client.commands.get(interaction.commandName);
 
 	if (!command) return;
@@ -77,13 +82,15 @@ getReview = async function(set) {
 
     if (review && !review.error) {
 		rating = review.average_rating ? review.average_rating : "?";
-		message = new MessageEmbed()
+		message = new EmbedBuilder()
 		.setColor('#F2CD37')
 		.setTitle(review.name + ' ' + review.year)
 		.setURL(review.url)
 		.setThumbnail("https://brickinsights.com/storage/sets/"+parseSetID(set)+".jpg")
-		.addField('Rated',review.name +" is rated **"+ rating + "/100**") /*+ ", belongs to the "+ set.primary_category.name +" category")*/
-		.addField('Links', "More reviews at [BrickInsignt]("+review.url+")")
+		.addFields([
+			{ name: 'Rated', value: review.name +" is rated **"+ rating + "/100**" }, /*+ ", belongs to the "+ set.primary_category.name +" category")*/
+			{ name: 'Links', value: "More reviews at [BrickInsignt]("+review.url+")"}
+		])
 		.setFooter({"text":'Source : BrickInsignt'});
 
 		log("review," + set);
@@ -123,20 +130,35 @@ getSetInfos = async function(setNumber) {
 			notes = '\n'+set.extendedData.notes;
 		}
 
-        var setCard = new MessageEmbed()
+        var setCard = new EmbedBuilder()
             .setColor('#F2CD37')
             .setTitle(set.number + ' ' + set.name)
             .setURL(set.bricksetURL)
             .setThumbnail(thumbnail)
-            .addField('General',"Released in **"+ set.year + "**, belongs to the **"+ set.theme +"** category"+notes)
-			.addField('Pieces', "Made of **" + set.pieces +"** parts", true);
+			.addFields([
+				{ name: 'General', value: "Released in **"+ set.year + "**, belongs to the **"+ set.theme +"** category"+notes }
+			]);
 
-		if(set.minifigs && set.minifigs > 0) {
-			setCard.addField('Minifigures','Contains **'+set.minifigs+ '** minifigure'+(set.minifigs > 1 ? 's' : ''), true);
+		if(set.pieces) {
+			setCard.addFields([
+				{ name: 'Pieces', value: "Made of **" + set.pieces +"** parts", inline: true }
+			]);
+		} else {
+			setCard.addFields([
+				{ name: 'Pieces', value: "Piece count is not available for this set", inline: true }
+			]);
 		}
 
-		setCard.addField('Price', formatPrice(set))
-				.addField('Links', "[Brickset]("+set.bricksetURL+")   -   [Bricklink]("+BLlink+")   -   [BrickInsight]("+BInsight+")");
+		if(set.minifigs && set.minifigs > 0) {
+			setCard.addFields([
+				{ name: 'Minifigures', value: 'Contains **'+set.minifigs+ '** minifigure'+(set.minifigs > 1 ? 's' : ''), inline: true }
+			]);
+		}
+
+		setCard.addFields([
+			{ name: 'Price', value: formatPrice(set) },
+			{ name: 'Links', value: "[Brickset]("+set.bricksetURL+")   -   [Bricklink]("+BLlink+")   -   [BrickInsight]("+BInsight+")"}
+		]);
 
 		if(instructions.matches && instructions.matches >=1) {
 			let instructionsList = "";
@@ -147,7 +169,9 @@ getSetInfos = async function(setNumber) {
 					instructionsList += "["+(i+1)+"]("+encodeURI(booklet.URL)+")  ";
 				}
 			}
-			setCard.addField('Instructions', instructionsList);
+			setCard.addFields([
+				{name: 'Instructions', value: instructionsList}
+			]);
 		}
 		if (designers.length > 0) {
 			let designersList = "";
@@ -163,7 +187,9 @@ getSetInfos = async function(setNumber) {
 					designersList +=  '** / **';
 				}
 			}
-			setCard.addField(title, designersList);
+			setCard.addFields([
+				{name: title, value: designersList }
+			]);
 		}
 
 		setCard.setFooter({"text":'Source : Brickset', "iconURL": "https://brickset.com/favicon.ico"});
@@ -182,17 +208,21 @@ searchBrickset = async function(query) {
 	apiFinds = apiFinds.slice(0, config.maximumSearchResults);
 
 	if(matches && matches > 1) {
-		var answer = new MessageEmbed()
+		var answer = new EmbedBuilder()
 			.setColor('#F2CD37')
 			.setTitle(matches + ' results found!')
 			.setThumbnail(apiFinds[0].image.imageURL)
 
 		apiFinds.forEach(set => {
 			answer
-			.addField(set.number, "["+set.name+"]("+set.bricksetURL+") ("+set.year+")");
+			.addFields([
+				{ name: set.number, value: "["+set.name+"]("+set.bricksetURL+") ("+set.year+")" }
+			]);
 		});
 
-		answer.addField(":notebook_with_decorative_cover: Brickset search results", encodeURI("https://brickset.com/sets?query="+query));
+		answer.addFields([
+			{name: ":notebook_with_decorative_cover: Brickset search results", value: encodeURI("https://brickset.com/sets?query="+query) }
+		]);
 
 		answer.setFooter({"text": 'Use `!set {set number}` to see more!', "iconURL": "https://thibautplg.github.io/legbot/img/legBot.png"});
 		log("search,"+query);
@@ -208,58 +238,63 @@ searchBrickset = async function(query) {
 
 showHelp = async function() {
     var t = "/";
-    var help = new MessageEmbed()
+    var help = new EmbedBuilder()
         .setColor("#009688")
         .setTitle("LegBot help")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
-        .addField('Hey!', "Thanks for using this LEGO bot! :kissing_smiling_eyes: \n To use me, type the following commands :")
-        .addField('Commands : ', "`"+t+"set [SET NUMBER]`  to have general informations about a set.\n"+
+        .addFields([
+			{name: 'Hey!', value: "Thanks for using this LEGO bot! :kissing_smiling_eyes: \n To use me, type the following commands :" },
+        	{name: 'Commands : ',value: "`"+t+"set [SET NUMBER]`  to have general informations about a set.\n"+
 			"`"+t+"search [QUERY]` to search a set by name. {beta}\n"+
 			"`"+t+"part [PART ID]`  to have informations about a piece (Bricklink id).\n"+
 			"`"+t+"review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"+
 			"`"+t+"setoftheday`  to get Brickset's set of the day \n"+
 			"`"+t+"legbot`  to display this message... Not that useful if you're reading this tho. \n "+
-			"`"+t+"credits`  to show dev credits. \n \n"
-		);
+			"`"+t+"credits`  to show dev credits. \n \n"}
+		]);
 		if (config && config.legacy && config.legacy.enabled){
 			var trigger = config.legacy.trigger;
-			help.addField("Legacy commands :",
+			help.addFields([
+				{name: "Legacy commands :", value:
 				"`"+trigger+"set [SET NUMBER]`  to have general informations about a set.\n"+
 				"`"+trigger+"review [SET NUMBER]`  to have infos about the requested set (rating, reviews...) \n"+
 				"`"+trigger+"part [PART ID]`  to have informations about a piece (Bricklink id)\n"+
 				"`"+trigger+"mixeljoint`  to have the list of the most used mixeljoint (with an awesome drawing of each).\n"+
-				"**These commands can be used in the middle of a sentence.** \n"
-			)
+				"**These commands can be used in the middle of a sentence.** \n" }
+			])
 		}
-		help.addField("Reactions :",
+		help.addFields([
+			{name: "Reactions :", value:
 			"You can add a \"🗑️\" reaction to most of the bot messages within 4 minutes to remove them. \n"+
-			"You can add a \"🔎\", \"🔍\" or \"🖼️\" reaction on the set or part command to have a bigger image."
-		);
+			"You can add a \"🔎\", \"🔍\" or \"🖼️\" reaction on the set or part command to have a bigger image." }
+		]);
 
     log("help,"+package.version);
 	return({ embeds: [help]});
 }
 
 showCredits = async function() {
-    var credits = new MessageEmbed()
+    var credits = new EmbedBuilder()
         .setColor("#03A9F4")
         .setTitle("LegBot")
         .setThumbnail("https://cdn.discordapp.com/avatars/"+client.user.id+'/'+client.user.avatar+'.png')
         .setURL("https://github.com/ThibautPlg/Discord-LEGO-Bot")
-        .addField('General', "This bot has been developped by Thibaut P\n \
-        Twitter : [@thibaut_plg](https://twitter.com/thibaut_plg)")
-        .addField('APIs and ressources', "\
-        - Rebrickable API : https://rebrickable.com/api/\n\
-        - Brick Insight public API : https://brickinsights.com/ \n \
-        - Brickset API : https://brickset.com \n \
-        - BrickLink links : https://www.bricklink \n \
-        - BrickOwl links : https://www.brickowl.com\n")
-        .addField('Technos', "This bot is based on [discord.js](https://discord.js.org/)")
-        .addField('Github', "This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)")
-		.addField('Uptime', (process.uptime() + "").toHHMMSS(), true)
-        .addField('Version', package.version, true)
-        .addField('\u200b', '\u200b', true)
-        .addField('Server count', String((client.guilds.cache).size), true)
+        .addFields([
+			{name: 'General', value: "This bot has been developped by Thibaut P\n \
+			Twitter : [@thibaut_plg](https://twitter.com/thibaut_plg)" },
+			{name: 'APIs and ressources', value: "\
+			- Rebrickable API : https://rebrickable.com/api/\n\
+			- Brick Insight public API : https://brickinsights.com/ \n \
+			- Brickset API : https://brickset.com \n \
+			- BrickLink links : https://www.bricklink \n \
+			- BrickOwl links : https://www.brickowl.com\n" },
+			{name: 'Technos', value: "This bot is based on [discord.js](https://discord.js.org/)"},
+			{name: 'Github', value:"This bot is available on [Github](https://github.com/ThibautPlg/Discord-LEGO-Bot)"},
+			{name: 'Uptime', value:(process.uptime() + "").toHHMMSS(), inline: true},
+			{name: 'Version', value:package.version, inline: true},
+			{name: '\u200b', value:'\u200b', inline: true},
+			{name: 'Server count', value: String((client.guilds.cache).size), inline: true}
+		]);
     log("credits,"+package.version);
 	return({ embeds: [credits]});
 }
@@ -339,29 +374,41 @@ getPartsInfos = async function(partNo, retry) {
 			}
 		}
 
-		const partsInfo = new MessageEmbed()
+		const partsInfo = new EmbedBuilder()
 			.setColor(color)
 			.setTitle(rebrickableNo + " : " +part.name)
 			.setURL(part.part_url)
 			.setThumbnail(part.part_img_url)
-			.addField('General', productionState + part.name +"\n "+releaseString);
+			.addFields([
+				{name: 'General', value: productionState + part.name +"\n "+releaseString}
+			]);
 
 		if(bricklinkId) {
-			partsInfo.addField("Colors : ","[Bricklink inventory](https://www.bricklink.com/catalogItemIn.asp?P="+bricklinkId+"&v=3&in=S)");
+			partsInfo.addFields([
+				{name: "Colors : ",value: "[Bricklink inventory](https://www.bricklink.com/catalogItemIn.asp?P="+bricklinkId+"&v=3&in=S)"}
+			]);
 		}
 
 		if(part.molds && part.molds.length) {
-			partsInfo.addField("Similar to", getSimilarParts(part.molds));
+			partsInfo.addFields([
+				{name: "Similar to : ",value: getSimilarParts(part.molds)}
+			]);
 		} else if(part.alternates && part.alternates.length) {
-			partsInfo.addField("See also", getSimilarParts(part.alternates));
+			partsInfo.addFields([
+				{name: "See also",value: getSimilarParts(part.alternates)}
+			]);
 		}
 
 		if(part.print_of && part.print_of.length) {
-			partsInfo.addField("Print of", "["+part.print_of+"](https://rebrickable.com/parts/"+part.print_of+")" );
+			partsInfo.addFields([
+				{name: "Print of", value: "["+part.print_of+"](https://rebrickable.com/parts/"+part.print_of+")"}
+			]);
 		}
 
 		partsInfo
-			.addField('Shop : ', "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", true)
+			.addFields([
+				{name: 'Shop : ', value: "[Bricklink]("+bricklinkUrl+")  |  [BrickOwl]("+brickOwlUrl+") |  [Lego PaB]("+legoUrl+")", inline: true }
+			])
 			.setFooter({"text": 'Source : '+ part.part_url, "iconURL": "https://rebrickable.com/static/img/favicon.png"});
 
 		log("part," + partNo);
@@ -480,8 +527,8 @@ enableDeleteOption = function(message) {
 
 enableImageEnlargeOption = async function(message, result) {
 
-	if(!!result && !!result.embeds && !!result.embeds[0] && !!result.embeds[0].thumbnail) {
-		imageURL = result.embeds[0].thumbnail["url"]
+	if(!!result && !!result.embeds && !!result.embeds[0] && !!result.embeds[0].data && !!result.embeds[0].data.thumbnail) {
+		imageURL = result.embeds[0].data.thumbnail["url"]
 
 		const filter = (reaction, user) => { return user.id !== message.author.id; }
 		const collector = message.createReactionCollector({ filter, time: 240000 });

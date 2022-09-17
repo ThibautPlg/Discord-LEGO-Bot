@@ -7,19 +7,31 @@ const { Routes } = require('discord-api-types/v9');
 const { clientId, token } = require('./config.json');
 const fs = require('fs');
 const path = require('path');
+const intents = [
+	GatewayIntentBits.Guilds,
+	GatewayIntentBits.GuildMessages,
+	GatewayIntentBits.GuildMessageReactions,
+	GatewayIntentBits.DirectMessages,
+	GatewayIntentBits.DirectMessageReactions
+];
+/* Check if the bot is running in legacy mode,
+* aka using trigger commands in addition to the
+* slash commands.
+*/
+isLegacyMode = function(){
+	return config && config.legacy && config.legacy.enabled;
+}
+if(isLegacyMode()) {
+	intents.push(GatewayIntentBits.MessageContent);
+}
+
 const client = new Client({
 	partials: [
 		Partials.Message,
 		Partials.Channel,
 		Partials.Reaction
 	],
-	intents: [
-		GatewayIntentBits.Guilds,
-		GatewayIntentBits.GuildMessages,
-		GatewayIntentBits.GuildMessageReactions,
-		GatewayIntentBits.DirectMessages,
-		GatewayIntentBits.DirectMessageReactions
-	],
+	intents: intents,
 	retryLimit: 2,
 	presence: {
 		status: "online",
@@ -252,7 +264,7 @@ showHelp = async function() {
 			"`"+t+"legbot`  to display this message... Not that useful if you're reading this tho. \n "+
 			"`"+t+"credits`  to show dev credits. \n \n"}
 		]);
-		if (config && config.legacy && config.legacy.enabled){
+		if (isLegacyMode()){
 			var trigger = config.legacy.trigger;
 			help.addFields([
 				{name: "Legacy commands :", value:
@@ -730,7 +742,7 @@ debug = function(msg) {
  * as Discord disabled the reading of the message content.
  * Enable by toggling "config.legacy.enabled" to true.
  */
-if (config && config.legacy && config.legacy.enabled && ((client.guilds.cache).size < 100)){
+if (isLegacyMode()){
 
 	eval(fs.readFileSync(path.join(__dirname, 'commands/legacy/legacy.js'))+'');
 

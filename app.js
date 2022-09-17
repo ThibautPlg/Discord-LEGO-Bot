@@ -185,7 +185,7 @@ getSetInfos = async function(setNumber) {
 				{name: 'Instructions', value: instructionsList}
 			]);
 		}
-		if (designers.length > 0) {
+		if (designers && designers.length > 0) {
 			let designersList = "";
 			if(designers.length == 1) {
 				title = "Designer";

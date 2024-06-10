@@ -21,8 +21,21 @@ This LEGO Discord bot is used to show general informations about LEGO sets and p
 Since July 2020, LegBot has been invited to more than 100 servers ! Thank you everyone ! I hope the bot is doing right for your queries, do not forget to contact me on twitter if something goes wrong or is missing !</strike>
 
 <strike>As of February 2021 LegBot is on more than 300 servers ! This is insane !
-March 2021 : 400 ! I'll consider adding a tag instead of editing this file.</strike> September 2021 : almost 600 !
+March 2021 : 400 ! I'll consider adding a tag instead of editing this file.</strike> <strike>September 2021 : almost 600 !</strike>
 Thanks you everyone !
+</p>
+<p style="background-color: #9c31312e !important">
+<h2>(June 10, 2024) - Legbot is now selfhosted only</h2>
+
+
+On July 6th 2024, Legbot will start to dysfunction.
+
+This is due to a change in Discord's policy that requires developers to prove their identity through an official document. And there's no way that I will give them my ID card.
+
+If you want to use Legbot for your Discord server, you will now have to selfhost the bot using this repo code.
+
+Thanks everyone who supported this project for the last 4 and a half years. I can proudly say that it was installed on more than 900 servers, only through word of mouth. Thanks to the people who contributed with ideas and improvements.
+
 </p>
 <hr>
 
